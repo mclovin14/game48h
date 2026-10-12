@@ -1,0 +1,132 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root,
+.app {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0d0f14;
+  color: #e6e9f0;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+}
+
+.app {
+  position: relative;
+}
+
+.game {
+  width: 100%;
+  height: 100%;
+}
+
+.game canvas {
+  image-rendering: pixelated;
+}
+
+/* HUD não captura o mouse: os cliques vão para o jogo */
+.hud {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: none;
+  font-size: 13px;
+}
+
+.meter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.meter span {
+  width: 56px;
+}
+
+.meter-track {
+  width: 180px;
+  height: 10px;
+  background: #2a2f3b;
+  border: 1px solid #4a5163;
+}
+
+.meter-fill {
+  height: 100%;
+  transition: width 150ms;
+}
+
+.ammo {
+  display: flex;
+  gap: 12px;
+}
+
+.ammo .weapon {
+  color: #9aa3b5;
+}
+
+.ammo .sel {
+  color: #0d0f14;
+  background: #e6e9f0;
+  padding: 0 4px;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 10, 14, 0.6);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 260px;
+  padding: 20px 24px;
+  background: #1b1f2a;
+  border: 2px solid #4a5163;
+  text-align: center;
+}
+
+.panel h1,
+.panel h2 {
+  margin: 0 0 8px;
+}
+
+.panel button {
+  font: inherit;
+  padding: 8px 12px;
+  color: inherit;
+  background: #2b303d;
+  border: 1px solid #4a5163;
+  cursor: pointer;
+}
+
+.panel button:hover {
+  background: #3a4152;
+}
+
+.dialog {
+  max-width: 560px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dialog p {
+  margin: 0;
+  white-space: pre-line;
+  line-height: 1.5;
+}
+
+.dialog small {
+  color: #9aa3b5;
+}

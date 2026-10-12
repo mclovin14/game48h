@@ -1,0 +1,6 @@
+77a92357-93a9-4579-964d-ac4862f12434 hurt_east (animate_image, seed 11, 6 quadros, idle_00 -> idle_00)
+78ac9899-923f-48ae-9d67-deeafda07cae knockout_east (animate_image, seed 23, 8 quadros, idle_00 -> drafts/knockout_keyframe.png)
+2c975f31-2a8d-49d1-a7d8-4a714db6cb4c knockout keyframe (edit_image_pro_flash, seed 11)
+976c11b4-e139-4fe6-a57b-3de144c27cae head_a (negro)
+2f79d20a-247b-4699-8885-7e5b97694ac3 head_b (branco)
+8037d741-f7d1-48ce-8994-8e40c631eae4 head_c (asiatico)

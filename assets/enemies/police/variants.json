@@ -1,0 +1,22 @@
+{
+  "_doc": "Variantes do policial: o corpo é o master; a pele troca 1:1 pela ordem de luz (claro -> escuro) e o cabelo do master vira hair[hair_swap]. A cabeça sai de drafts/head_<id>_raw.png (aprovadas em 11/10/2026). eye (opcional): cor da íris no lugar do azul-marinho da farda (olho azul da b, fora da paleta do master).",
+  "police_a": {
+    "head": "drafts/head_a_raw.png",
+    "skin": [[166, 91, 57], [137, 71, 41], [96, 50, 32], [65, 35, 23]],
+    "hair": [[34, 21, 15], [51, 28, 19]],
+    "hair_swap": 0
+  },
+  "police_b": {
+    "head": "drafts/head_b_raw.png",
+    "skin": [[251, 181, 142], [227, 144, 102], [185, 107, 68], [148, 80, 48]],
+    "hair": [[247, 171, 51], [210, 141, 39], [161, 108, 33], [104, 56, 26]],
+    "hair_swap": 1,
+    "eye": [[72, 128, 208]]
+  },
+  "police_c": {
+    "head": "drafts/head_c_raw.png",
+    "skin": [[246, 186, 142], [220, 145, 83], [185, 105, 63], [110, 55, 29]],
+    "hair": [[24, 20, 18], [51, 40, 34]],
+    "hair_swap": 0
+  }
+}

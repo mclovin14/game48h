@@ -1,0 +1,17 @@
+6ea68bde-57be-412e-887f-5bfe41fb0a6d idle_gun_east_00 idle_gun_east_01 idle_gun_east_02
+0ce2bfc2-54b4-4df9-abe6-ab62a7f82d5e idle_gun_east_03 idle_gun_east_04 idle_gun_east_05
+cb5eaf0b-e944-4566-b3f6-6aa202177a8e idle_gun_east_06 idle_gun_east_07 walk_gun_east_00
+d3380d7c-ef88-4cb3-8576-835e66bf0d4f walk_gun_east_01 walk_gun_east_02 walk_gun_east_03
+0d54c0de-2d96-47d7-b637-c97d87406dff walk_gun_east_04 walk_gun_east_05 walk_gun_east_06
+3d95fc76-b734-422b-85c6-15d1ed7b55e9 walk_gun_east_07 aim_gun_east_00 aim_gun_east_01
+89931287-c8dd-45f8-b248-8acb3237a142 aim_gun_east_02 aim_gun_east_03 aim_gun_east_04
+c50c5452-741d-4122-986d-b59bf65d94a4 aim_gun_east_05 aim_gun_east_06 aim_gun_east_07
+d70d9bc7-e75f-4553-9f40-f65e7cd6f49e death_east_00 death_east_01 death_east_02
+c30945fa-e988-4408-bf26-8ed8f20df0c0 death_east_03 death_east_04 death_east_05
+87e5ba7d-dfc5-4d65-81a0-86a2d6bb6fa3 death_east_06 death_east_07 death_east_08
+b3305c88-3fa6-4fa7-88f3-49d1605f5548 death_east_09 death_east_10 death_east_11
+5bed2397-b8ee-45fd-8866-8fc3328c57f7 death_east_12 death_east_13 death_east_14
+0da37c38-502c-445a-8f89-2e8bfb135be0 death_east_15 death_east_16 death_east_17
+8b578c78-1550-4ff2-bdc9-c484179b1084 death_east_18 death_east_19 death_east_20
+bd2d6f1c-9801-446d-ae8d-cf5fbef38f1b death_east_21 death_east_22 death_east_23
+56930e20-7892-4480-900b-8eb126f22075 aim_gun_east_05 aim_gun_east_06 aim_gun_east_07 (refeito, ref = aim_04)

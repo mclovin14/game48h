@@ -15,7 +15,8 @@ import sys
 
 from sprite_lib import (load, load_frames, load_palette, remap, drop_islands, cm, swap_colors, fill_holes,
                         locate, save_anim, report, contact, RED, DRED, np)
-from build_police_master import DEATH_DUR, HURT_DUR, KO_DUR, GIF_DUR, GUN_FLOOR, DEATH_FLOOR
+from build_police_master import (DEATH_DUR, HURT_DUR, KO_DUR, GIF_DUR, GUN_FLOOR, DEATH_FLOOR, JUMP_DUR,
+                                 CROUCH_DUR, kneel_legs, on_legs)
 from shoot_fx import shoot_frames, lit_map, DURATIONS as SHOOT_DUR
 
 POLICE = os.path.join(os.path.dirname(__file__), '..', 'assets', 'enemies', 'police')
@@ -27,6 +28,9 @@ HEAD = [(6, 29, 51, 84), (29, 41, 55, 70)]   # embaixo para em x=70: queixo vai 
 # faixa do quepe e da testa usada para achar a cabeça no quadro (pelo contorno, sem o metal)
 FIND = (6, 30, 48, 82)
 SEARCH = 7
+# pulo e ajoelhar: a cabeça desce até ~25 px; nelas a busca vai mais para baixo (dy de -SEARCH até DEEP)
+DEEP = {'jump_gun_east': 28, 'crouch_gun_east': 24}
+PAD = 32
 # encaixe mínimo do contorno (IoU) para considerar a cabeça em pé e colar o rosto
 FIT_MIN = 0.70
 # quedas: só os primeiros quadros têm a cabeça em pé (depois ela inclina e o encaixe engana)
@@ -36,13 +40,18 @@ CAP_ROWS = (13, 22)
 # íris do master (azul-marinho da farda); a variante com 'eye' no variants.json troca por essa cor
 IRIS = (34, 50, 95)
 CAP_BRIM = (22, 25, 59)
-# aim 0-3: a mão e a pistola passam na frente do rosto; cola a cabeça e põe as mãos de volta por cima
-HANDS_FRONT = {'aim_gun_east': {0, 1, 2, 3}}
+# aim 0-3 e a recarga inteira: a mão e a pistola passam na frente do rosto; cola a cabeça e põe as mãos
+# de volta por cima (sem isso, a recarga ficava com buraco na mão nos quadros 1, 2, 8 e 9)
+HANDS_FRONT = {'aim_gun_east': {0, 1, 2, 3}, 'reload_gun_east': set(range(11))}
 ANIMS = {
     'idle_gun_east': (GUN_FLOOR, GIF_DUR['idle_gun_east']),
     'walk_gun_east': (GUN_FLOOR, GIF_DUR['walk_gun_east']),
+    'run_gun_east': (GUN_FLOOR, GIF_DUR['run_gun_east']),
+    'reload_gun_east': (GUN_FLOOR, GIF_DUR['reload_gun_east']),
     'aim_gun_east': (GUN_FLOOR, GIF_DUR['aim_gun_east']),
     'shoot_gun_east': (GUN_FLOOR, SHOOT_DUR),
+    'jump_gun_east': (GUN_FLOOR, JUMP_DUR),
+    'crouch_gun_east': (GUN_FLOOR, CROUCH_DUR),
     'hurt_east': (GUN_FLOOR, HURT_DUR),
     'death_east': (DEATH_FLOOR, DEATH_DUR),
     'knockout_east': (None, KO_DUR),
@@ -68,11 +77,11 @@ def skin_index(f, skin, region=None):
     return float((u * np.arange(len(skin))).sum()) if u.sum() else None
 
 
-def head_zone(a, standing, base):
+def head_zone(a, standing, base, deep=SEARCH):
     """Onde o cabelo pode estar. O master usa a cor do cabelo também nos sapatos e no coldre:
     fora desta zona ela fica como está (marrom do master)."""
     if standing:
-        _, dy, dx = find_head(a, base)
+        _, dy, dx = find_head(a, base, deep)
         return grow(np.logical_or(*head_region(dy, dx)), 4)
     from scipy.ndimage import label
     lab, n = label(cm(a, ramps['skin']))
@@ -241,17 +250,18 @@ def head_region(dy, dx):
 
 def silhouette(a):
     """Contorno sem o metal (a pistola muda de lugar), com borda para o deslocamento não sair do quadro."""
-    return np.pad((a[:, :, 3] > 0) & ~cm(a, ramps['metal']), SEARCH)
+    return np.pad((a[:, :, 3] > 0) & ~cm(a, ramps['metal']), PAD)
 
 
-def find_head(a, base):
+def find_head(a, base, deep=SEARCH):
     """(encaixe, dy, dx) em que o quepe e a testa do quadro mais cobrem os da base."""
-    y0, y1, x0, x1 = (c + SEARCH for c in FIND)
+    y0, y1, x0, x1 = (c + PAD for c in FIND)
     ref = silhouette(base)[y0:y1, x0:x1]
     s = silhouette(a)
     best = (0.0, 0, 0)
-    for dy in range(-SEARCH, SEARCH + 1):
-        for dx in range(-SEARCH, SEARCH + 1):
+    for dy in range(-SEARCH, deep + 1):
+        side = SEARCH if deep == SEARCH else 12
+        for dx in range(-side, side + 1):
             w = s[y0 + dy:y1 + dy, x0 + dx:x1 + dx]
             fit = (w & ref).sum() / max((w | ref).sum(), 1)
             if fit > best[0]:
@@ -259,9 +269,9 @@ def find_head(a, base):
     return best
 
 
-def paste_face(a, head, mask, hidden, base):
+def paste_face(a, head, mask, hidden, base, deep=SEARCH):
     """Cola a cabeça se ela está em pé. Devolve (quadro, offset ou None, encaixe)."""
-    fit, dy, dx = find_head(a, base)
+    fit, dy, dx = find_head(a, base, deep)
     if fit < FIT_MIN:
         return a, None, fit
     o = a.copy()
@@ -364,7 +374,7 @@ def build(vid, v):
     allowed = [list(c) for c in variant_palette(v) + ramps['hair']]   # marrom do master: sapatos e coldre
     face_ref = head[mask]
     old = ramps['skin'] + ramps['hair']
-    previews = []
+    previews, done = [], {}
     for name, (floor, dur) in ANIMS.items():
         if name == 'shoot_gun_east':
             vr = dict(ramps, skin=v['skin'], hair=v['hair'])
@@ -373,16 +383,18 @@ def build(vid, v):
                       sheet_path=os.path.join(out, f'{vid}_{name}_sheet.png'),
                       gif_path=os.path.join(out, f'{vid}_{name}.gif'), durations=dur)
             report(f'{vid} {name}', frames, floor)
+            done[name] = frames
             print(f'   rosto: do aim 7 | pele do master sobrando: {sum(int(cm(f, ramps["skin"]).sum()) for f in frames)}')
             previews.append(frames)
             continue
         src = load_frames(os.path.join(MASTER, name), name)
         frames, log, left = [], [], 0
+        deep = DEEP.get(name, SEARCH)
         for i, a in enumerate(src):
-            zone = head_zone(a, i < STANDING.get(name, len(src)), base)
+            zone = head_zone(a, i < STANDING.get(name, len(src)), base, deep)
             boot = cm(a, ramps['hair']) & ~zone
             if i < STANDING.get(name, len(src)):
-                f, off, match = paste_face(a, head, mask, hidden, base)
+                f, off, match = paste_face(a, head, mask, hidden, base, deep)
                 if off is not None and i in HANDS_FRONT.get(name, ()):
                     fg = hands_front(a, base, off)
                     f[fg] = a[fg]
@@ -397,7 +409,7 @@ def build(vid, v):
             face = np.zeros_like(swapped)
             if off is None and i < STANDING.get(name, len(src)):
                 # rosto do master (sem colagem): tons na mesma proporção do rosto colado
-                _, dy, dx = find_head(a, base)
+                _, dy, dx = find_head(a, base, deep)
                 face = np.logical_or(*head_region(dy, dx)) & swapped
                 g = face_match(f, face, usage(head, v['skin'], mask), v['skin'])
             f = swap_colors(f, sw)
@@ -441,6 +453,23 @@ def build(vid, v):
               + ('' if same else '  !! número de quadros'))
         if name == 'aim_gun_east':
             aim_last = frames[-1]
+        done[name] = frames
+        previews.append(frames)
+    # ajoelhado: a pose parada e a mira, a recarga e o tiro são os quadros em pé da variante descidos sobre
+    # as pernas do master (sem pele nem cabelo), como no master: o rosto é o mesmo dos quadros em pé
+    legs = kneel_legs(load_frames(os.path.join(MASTER, 'crouch_gun_east'), 'crouch_gun_east')[5])
+    done['crouch_gun_east'][5] = on_legs(legs, done['idle_gun_east'][0])
+    save_anim(done['crouch_gun_east'], os.path.join(out, 'crouch_gun_east'), 'crouch_gun_east',
+              sheet_path=os.path.join(out, f'{vid}_crouch_gun_east_sheet.png'),
+              gif_path=os.path.join(out, f'{vid}_crouch_gun_east.gif'), durations=CROUCH_DUR)
+    for name, std, dur in (('crouch_aim_gun_east', 'aim_gun_east', GIF_DUR['aim_gun_east']),
+                           ('crouch_reload_gun_east', 'reload_gun_east', GIF_DUR['reload_gun_east']),
+                           ('crouch_shoot_gun_east', 'shoot_gun_east', SHOOT_DUR)):
+        frames = [on_legs(legs, f) for f in done[std]]
+        save_anim(frames, os.path.join(out, name), name,
+                  sheet_path=os.path.join(out, f'{vid}_{name}_sheet.png'),
+                  gif_path=os.path.join(out, f'{vid}_{name}.gif'), durations=dur)
+        report(f'{vid} {name}', frames, GUN_FLOOR, None if 'shoot' in name else allowed)
         previews.append(frames)
     return previews
 

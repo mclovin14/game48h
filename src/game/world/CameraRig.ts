@@ -6,6 +6,7 @@ import type { Humanoid } from '../anims/humanoid';
 const DEADZONE_FRAC = 1 / 4; // fração da largura em que o Kael anda sem a câmera mexer
 const LERP_X = 0.12; // quanto a câmera alcança o alvo por quadro (1 = na hora)
 const LOOKAHEAD = 120; // px à frente do lado em que o Kael olha
+const LOOKAHEAD_RUN = 170; // [TESTE] correndo, olha mais à frente para ele não colar na borda
 const LOOKAHEAD_MS = 900; // tempo para o olhar à frente trocar de lado
 
 /**
@@ -16,6 +17,7 @@ export class CameraRig {
   private readonly cam: Phaser.Cameras.Scene2D.Camera;
   private look = 0;
   private debug?: Phaser.GameObjects.Graphics;
+  private isDetached = false;
   /** Centro da arena enquanto a câmera está travada. */
   private lockX?: number;
   /** A câmera segue este ponto: o Kael, ou o centro da arena quando travada (trocar de alvo pularia a câmera). */
@@ -59,6 +61,34 @@ export class CameraRig {
     this.cam.setFollowOffset(0, 0);
   }
 
+  /** Largou o Kael para a cutscene deslizar a câmera (o fundo então anda pelo update da cena). */
+  get detached(): boolean {
+    return this.isDetached;
+  }
+
+  /** Centro da tela quando a câmera segue o Kael (ou a arena travada). */
+  get homeX(): number {
+    return this.lockX ?? this.target.x + this.look;
+  }
+
+  /** Cutscene: larga o Kael e desliza o centro da tela até `x`. Resolve quando chega. */
+  pan(x: number, ms: number): Promise<void> {
+    this.isDetached = true;
+    this.cam.stopFollow();
+    return new Promise((done) => {
+      this.cam.pan(x, HEIGHT / 2, ms, 'Sine.easeInOut', true, (_c: Phaser.Cameras.Scene2D.Camera, p: number) => {
+        if (p === 1) done();
+      });
+    });
+  }
+
+  /** Fim da cutscene: volta a seguir o Kael. Pula para a posição de seguir (o pan de volta já chegou nela). */
+  follow(): void {
+    this.isDetached = false;
+    this.cam.panEffect.reset();
+    this.cam.startFollow(this.point, true, LERP_X, 0, this.lockX === undefined ? -this.look : 0, 0);
+  }
+
   /** Volta a seguir o Kael. */
   unlock(): void {
     this.lockX = undefined;
@@ -66,13 +96,13 @@ export class CameraRig {
     this.cam.setFollowOffset(-this.look, 0);
   }
 
-  update(delta: number): void {
+  update(delta: number, running = false): void {
     if (this.locked) {
       if (this.debug) this.drawDebug();
       return;
     }
     // O ponto seguido desliza para o lado em que o Kael olha, sem virar de uma vez.
-    const goal = this.target.facing * LOOKAHEAD;
+    const goal = this.target.facing * (running ? LOOKAHEAD_RUN : LOOKAHEAD);
     const step = ((2 * LOOKAHEAD) / LOOKAHEAD_MS) * delta;
     this.look += Phaser.Math.Clamp(goal - this.look, -step, step);
     this.cam.setFollowOffset(-this.look, 0);

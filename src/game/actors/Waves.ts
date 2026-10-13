@@ -2,7 +2,8 @@ import Phaser from 'phaser';
 import type { BarricadeDef, LevelDef, Side } from '../levels/level_1';
 import type { CameraRig } from '../world/CameraRig';
 import { EnemyDirector } from './EnemyDirector';
-import { POLICE_FIRE, Police, lookId } from './Police';
+import { GUNNER_FIRE, type CopTarget } from './Gunner';
+import { Police, lookId } from './Police';
 
 // Valores provisórios [TESTE] das ondas.
 /** O Kael dispara a arena a esta distância antes da barricada. */
@@ -43,6 +44,8 @@ export class Waves {
   readonly cops: Police[] = [];
   /** Chamado quando um policial dispara (a cena resolve o acerto no Kael). */
   onFire?: (cop: Police) => void;
+  /** Chamado quando a última onda de uma barricada cai (a câmera solta). */
+  onCleared?: () => void;
   private arena?: Arena;
   private readonly cleared = new Set<BarricadeDef>();
   private debug?: { text: Phaser.GameObjects.Text; labels: Map<Police, Phaser.GameObjects.Text> };
@@ -60,10 +63,10 @@ export class Waves {
     return this.arena && [this.arena.left + ARENA_MARGIN, this.arena.right - ARENA_MARGIN];
   }
 
-  update(delta: number, kaelX: number, kaelAlive = true): void {
-    if (!this.arena && kaelAlive) this.tryStart(kaelX);
+  update(delta: number, kael: CopTarget): void {
+    if (!this.arena && kael.alive) this.tryStart(kael.x);
     if (this.arena) this.updateArena(delta);
-    for (const c of this.cops) c.update(delta, kaelX, kaelAlive);
+    for (const c of this.cops) c.update(delta, kael);
     this.removeBodies();
     if (this.debug) this.drawDebug();
   }
@@ -105,6 +108,7 @@ export class Waves {
     this.cleared.add(a.barricade);
     this.arena = undefined;
     this.camRig.unlock();
+    this.onCleared?.();
   }
 
   private spawn(a: Arena, side: Side): void {
@@ -117,7 +121,7 @@ export class Waves {
       stop = edge + dir * Phaser.Math.Between(...STOP_RANGE);
     }
     const cop = new Police(this.scene, edge - dir * SPAWN_OUTSIDE, this.groundY, look, undefined, stop);
-    cop.on(POLICE_FIRE, (c: Police) => this.onFire?.(c));
+    cop.on(GUNNER_FIRE, (c: Police) => this.onFire?.(c));
     this.cops.push(cop);
     a.members.push(cop);
   }

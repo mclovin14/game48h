@@ -1,9 +1,12 @@
 import Phaser from 'phaser';
 import type { BulletType } from '../events';
+import { t } from '../../i18n';
 
 // Valores provisórios [TESTE] do loot de munição.
 /** Chance de o loot ser de bala letal (o resto é não letal). */
 const LETHAL_CHANCE = 0.7;
+/** Chance de o policial morto com bala letal soltar a caixa (o nocauteado sempre solta). */
+export const DEATH_DROP_CHANCE = 0.5;
 /** Balas por caixa. */
 const LOOT_AMOUNT = 3;
 /** Distância do Kael para pegar a caixa. */
@@ -99,7 +102,7 @@ export class Loot {
 
   /** "+3 letal" subindo e sumindo. */
   private popup(d: Drop): void {
-    const label = d.type === 'lethal' ? 'letal' : 'não letal';
+    const label = t(d.type === 'lethal' ? 'game.lootLethal' : 'game.lootNonLethal');
     const text = this.scene.add
       .text(d.sprite.x, d.sprite.y - 14, `+${LOOT_AMOUNT} ${label}`, { fontFamily: 'monospace', fontSize: '12px', color: '#f2bc48' })
       .setOrigin(0.5, 1)

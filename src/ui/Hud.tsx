@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { bus, type GameEvents } from '../game/events';
+import { t } from '../i18n';
+import { useLang } from './settings';
 
 type Ammo = GameEvents['hud:ammo'];
 type Bar = { current: number; max: number };
@@ -16,11 +18,11 @@ function Meter({ label, value, color }: { label: string; value: Bar; color: stri
   );
 }
 
-/** HUD por cima do jogo: vida, índole, arma e munição. Só lê eventos, nunca mexe no jogo. */
+/** HUD por cima do jogo: vida, índole, arma, pente e reserva de cada tipo. Só lê eventos, nunca mexe no jogo. */
 export function Hud() {
   const [life, setLife] = useState<Bar>({ current: 0, max: 1 });
   const [morale, setMorale] = useState<Bar>({ current: 0, max: 1 });
-  const [ammo, setAmmo] = useState<Ammo>({ lethal: 0, nonLethal: 0, selected: 'lethal' });
+  const [ammo, setAmmo] = useState<Ammo>({ lethal: 0, nonLethal: 0, selected: 'lethal', mag: 0, magSize: 8, reloading: false });
   const [armed, setArmed] = useState(false);
 
   useEffect(() => {
@@ -32,15 +34,19 @@ export function Hud() {
     ];
     return () => off.forEach((f) => f());
   }, []);
+  useLang();
 
   return (
     <div className="hud">
-      <Meter label="Vida" value={life} color="#d94b4b" />
-      <Meter label="Índole" value={morale} color="#e0b84a" />
+      <Meter label={t('hud.life')} value={life} color="#d94b4b" />
+      <Meter label={t('hud.morale')} value={morale} color="#e0b84a" />
       <div className="ammo">
-        <span className="weapon">{armed ? 'Pistola' : 'Sem arma (1 saca)'}</span>
-        <span className={ammo.selected === 'lethal' ? 'sel' : ''}>Letal {ammo.lethal}</span>
-        <span className={ammo.selected === 'nonLethal' ? 'sel' : ''}>Não letal {ammo.nonLethal}</span>
+        <span className="weapon">{t(armed ? 'hud.pistol' : 'hud.unarmed')}</span>
+        <span className={ammo.mag === 0 ? 'mag empty' : 'mag'}>
+          {ammo.reloading ? t('hud.reloading') : `${t('hud.mag')} ${ammo.mag}/${ammo.magSize}`}
+        </span>
+        <span className={ammo.selected === 'lethal' ? 'sel' : ''}>{t('hud.lethal')} {ammo.lethal}</span>
+        <span className={ammo.selected === 'nonLethal' ? 'sel' : ''}>{t('hud.nonLethal')} {ammo.nonLethal}</span>
       </div>
     </div>
   );

@@ -45,13 +45,26 @@ export interface LevelDef {
   props: PropPlacement[];
   /** Barricadas policiais: ao chegar perto, a câmera trava e as ondas entram. */
   barricades: BarricadeDef[];
+  /** Fim da rua: a van dos mercenários e onde cada um deles fica (olive, ranger, coyote). */
+  boss: BossDef;
+}
+
+export interface BossDef {
+  /** Centro da van em x; ela fica na linha dos pés, atrás dos personagens. */
+  vanX: number;
+  /** A arte da van olha para a esquerda; true espelha. */
+  vanFlip?: boolean;
+  /** Mercenários em x, na ordem dos tons. */
+  mercenaries: number[];
+  /** Índice do mercenário que segura a Adriana pelo braço (ela fica à frente dele, do lado do Kael). */
+  holder: number;
 }
 
 // Sobrados (conceito A) alternando com prédios de tijolo (conceito B), colados um no outro, com um muro
 // contínuo atrás para nenhum vão mostrar o fundo. Só 8 fachadas por enquanto, então algumas repetem;
 // a mesma nunca aparece duas vezes na mesma tela.
 export const LEVEL_1: LevelDef = {
-  width: 3840, // 4 telas
+  width: 4800, // 5 telas: a quinta é a arena dos mercenários [TESTE]
   kaelX: 220,
   facades: [
     { name: 'bakery', gap: 40 }, // x 40
@@ -65,9 +78,12 @@ export const LEVEL_1: LevelDef = {
     { name: 'bakery', gap: 64 }, // 2748
     { name: 'pharmacy', gap: 56 }, // 3032
     { name: 'grocery', gap: 72 }, // 3432
-    { name: 'shoe_store' }, // 3695 (termina em 3958, passa do fim)
+    { name: 'shoe_store' }, // 3695
+    { name: 'optician', gap: 80 }, // 4038
+    { name: 'snack_bar', gap: 56 }, // 4384
+    { name: 'haberdashery', gap: 72 }, // 4838 (passa do fim)
   ],
-  lamps: [2, 4, 6, 8, 10],
+  lamps: [2, 4, 6, 8, 10, 12, 14],
   // lixeira e hidrante do fundo nos vãos entre prédios; os da frente longe dos postes (x 696, 1298, 2102, 2716, 3396) [TESTE]
   props: [
     { name: 'trash_bin', x: 300, lane: 'back' },
@@ -84,4 +100,6 @@ export const LEVEL_1: LevelDef = {
     { x: 2440, waves: [['right', 'right'], ['right', 'left', 'right']] },
     { x: 3700, waves: [['right', 'left'], ['right', 'right', 'left'], ['left', 'right', 'right']] },
   ],
+  // parados no fim da rua até a cutscene (fase 6) e a luta (fase 7) [TESTE]
+  boss: { vanX: 4560, mercenaries: [4330, 4420, 4700], holder: 2 },
 };

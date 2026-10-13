@@ -1,3 +1,11 @@
+/* fonte dos menus: Pixelify Sans (OFL, assets/fonts/), sem depender da internet */
+@font-face {
+  font-family: 'Pixelify Sans';
+  src: url('/fonts/pixelify_sans.ttf') format('truetype');
+  font-weight: 400 700;
+  font-display: block;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -71,6 +79,14 @@ body,
   color: #9aa3b5;
 }
 
+.ammo .mag {
+  font-weight: bold;
+}
+
+.ammo .mag.empty {
+  color: #e05a4f;
+}
+
 .ammo .sel {
   color: #0d0f14;
   background: #e6e9f0;
@@ -129,4 +145,293 @@ body,
 
 .dialog small {
   color: #9aa3b5;
+}
+
+/* ---------- Menus (título, pausa e opções): estilo The Last of Us, tudo à esquerda ---------- */
+
+.menu-screen {
+  --menu-text: #eadfce;
+  --menu-sel: #fce763;
+  --menu-dim: rgba(234, 223, 206, 0.5);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 0 0 7vw;
+  font-family: 'Pixelify Sans', ui-monospace, monospace;
+  overflow: hidden;
+}
+
+/* fundo do título: a rua da quadra 1 no entardecer, escurecida e desfocada */
+.menu-bg {
+  position: absolute;
+  inset: -16px;
+  background: url('/ui/title_bg.png') center / cover no-repeat;
+  image-rendering: pixelated;
+  filter: blur(3px) brightness(0.5) saturate(0.85);
+  animation: menu-drift 40s ease-in-out infinite alternate;
+}
+
+@keyframes menu-drift {
+  from {
+    transform: scale(1.04) translateX(0);
+  }
+  to {
+    transform: scale(1.04) translateX(-12px);
+  }
+}
+
+/* sombra da esquerda para a direita: o texto fica legível em cima da rua */
+.menu-screen.title::after,
+.menu-screen.pause::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(12, 8, 18, 0.88) 0%, rgba(12, 8, 18, 0.55) 45%, rgba(12, 8, 18, 0.1) 100%);
+  pointer-events: none;
+}
+
+.menu-screen.pause {
+  backdrop-filter: blur(2px) brightness(0.8);
+}
+
+.menu-column {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* logo 154x50 ampliado em múltiplos inteiros, sem suavizar */
+.logo {
+  width: 616px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 8px 0 rgba(0, 0, 0, 0.35));
+  user-select: none;
+}
+
+.logo.small {
+  width: 308px;
+}
+
+.menu-heading {
+  margin: 18px 0 0;
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--menu-dim);
+}
+
+.menu-list {
+  list-style: none;
+  margin: 28px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.menu-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 5px 0 5px 30px;
+  font: inherit;
+  font-size: 32px;
+  font-weight: 500;
+  color: var(--menu-text);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.45);
+  transition:
+    color 120ms,
+    transform 120ms;
+}
+
+/* marcador do item selecionado: triângulo de pixels */
+.menu-item.sel {
+  color: var(--menu-sel);
+  transform: translateX(8px);
+}
+
+.menu-item.sel::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  margin-top: -8px;
+  border-style: solid;
+  border-width: 8px 0 8px 12px;
+  border-color: transparent transparent transparent var(--menu-sel);
+}
+
+.options .menu-item {
+  min-width: 440px;
+  justify-content: space-between;
+  font-size: 26px;
+}
+
+.opt-value {
+  font-size: 22px;
+  color: var(--menu-dim);
+}
+
+.menu-item.sel .opt-value {
+  color: var(--menu-text);
+}
+
+.vol {
+  display: flex;
+  gap: 4px;
+}
+
+.vol-block {
+  width: 14px;
+  height: 18px;
+  background: #3a3346;
+  border: 2px solid #1a1422;
+}
+
+.vol-block.on {
+  background: #fc9c1d;
+}
+
+.menu-item.sel .vol-block.on {
+  background: var(--menu-sel);
+}
+
+.menu-hint {
+  position: absolute;
+  z-index: 1;
+  left: 7vw;
+  bottom: 20px;
+  margin: 0;
+  font-size: 16px;
+  color: var(--menu-dim);
+}
+
+@media (max-width: 760px), (max-height: 420px) {
+  .logo {
+    width: 462px;
+  }
+  .menu-item {
+    font-size: 26px;
+  }
+}
+
+@media (max-width: 520px) {
+  .logo {
+    width: 308px;
+  }
+  .options .menu-item {
+    min-width: 0;
+  }
+}
+
+/* cutscene: faixas pretas (entram e saem em 500 ms, BARS_MS no Cutscene.tsx), tela de texto e caixa de fala */
+.cutscene {
+  position: absolute;
+  inset: 0;
+  font-family: 'Pixelify Sans', ui-monospace, monospace;
+  cursor: pointer;
+}
+
+.cutscene-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 12%;
+  background: #000;
+  transition: transform 500ms ease-in-out;
+}
+
+.cutscene-bar.top {
+  top: 0;
+  transform: translateY(-100%);
+}
+
+.cutscene-bar.bottom {
+  bottom: 0;
+  transform: translateY(100%);
+}
+
+.cutscene-bar.on {
+  transform: translateY(0);
+}
+
+/* some em 700 ms (FADE_MS no opening.ts) */
+.cutscene-intro {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10%;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 700ms ease-in-out;
+}
+
+.cutscene-intro.on {
+  opacity: 1;
+}
+
+.cutscene-intro p {
+  /* largura fixa: o texto entrando não empurra a linha para os lados */
+  width: min(720px, 100%);
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.cutscene-line {
+  position: absolute;
+  left: 50%;
+  /* em cima, no céu: embaixo ficam os personagens */
+  top: calc(12% + 16px);
+  width: min(720px, calc(100% - 32px));
+  transform: translateX(-50%);
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 14px 18px;
+  background: rgba(10, 12, 18, 0.92);
+  border: 2px solid #e6e9f0;
+}
+
+.cutscene-line img {
+  width: 96px;
+  height: 96px;
+  image-rendering: pixelated;
+  border: 2px solid #4a5163;
+  flex-shrink: 0;
+}
+
+.cutscene-line strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #ffd84a;
+  font-size: 18px;
+}
+
+.cutscene-line p {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.4;
+  min-height: 2.8em;
+}
+
+.cutscene-hint {
+  position: absolute;
+  right: 16px;
+  bottom: calc(6% - 0.5em);
+  color: #9aa3b5;
+  font-size: 13px;
 }

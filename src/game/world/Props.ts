@@ -9,6 +9,7 @@ const LEVEL_DIR = 'levels/level_1';
 export const GROUND = 'ground';
 const BARRICADE = 'barricade';
 const BEACON = 'beacon_glow';
+const VAN = 'van';
 
 /** Profundidade do que fica na frente do Kael e dos policiais (carro e faixa da frente). */
 const FRONT_DEPTH = 5;
@@ -28,10 +29,12 @@ const BEACON_SCALE = 1.6; // [TESTE]
 const BEACON_COLORS = [0xff3030, 0x3060ff];
 /** Alfa do brilho do giroflex: fraco no entardecer, forte à noite. */
 const BEACON_ALPHA: [number, number] = [0.35, 1];
+/** A van do PixelLab saiu pequena (91 px de altura): ampliada para ficar mais alta que o Kael. */
+const VAN_SCALE = 1.5; // [TESTE]
 
 export function loadProps(scene: Phaser.Scene): void {
   scene.load.image(GROUND, `${LEVEL_DIR}/ground.png`);
-  for (const name of ['car', 'hydrant', 'trash_bin', 'hydrant_front', 'trash_bin_front', BARRICADE])
+  for (const name of ['car', 'hydrant', 'trash_bin', 'hydrant_front', 'trash_bin_front', BARRICADE, VAN])
     scene.load.image(`prop_${name}`, `${LEVEL_DIR}/props/${name}.png`);
 }
 
@@ -88,6 +91,10 @@ export class Props {
       shadow.setDisplaySize(img.width * 1.1, 8);
     }
 
+    // van dos mercenários no fim da rua, na linha dos pés, atrás dos personagens (a arte tem 13 px de vazio embaixo)
+    const van = this.add(scene, VAN, level.boss.vanX, groundY + 2 + 12 * VAN_SCALE);
+    van.setScale(VAN_SCALE).setFlipX(!!level.boss.vanFlip);
+
     // barricada na linha dos pés, atrás dos personagens
     for (const { x } of level.barricades) {
       const b = this.add(scene, BARRICADE, x, groundY + 2);
@@ -97,7 +104,7 @@ export class Props {
     }
   }
 
-  private add(scene: Phaser.Scene, name: PropName | `${PropName}_front` | typeof BARRICADE, x: number, y: number): Phaser.GameObjects.Image {
+  private add(scene: Phaser.Scene, name: PropName | `${PropName}_front` | typeof BARRICADE | typeof VAN, x: number, y: number): Phaser.GameObjects.Image {
     const img = scene.add.image(x, y, `prop_${name}`).setOrigin(0.5, 1);
     this.sprites.push(img);
     return img;

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { t } from '../i18n';
 
 interface Props {
   text: string;
@@ -19,7 +20,7 @@ export function Dialog({ text, onClose }: Props) {
     <div className="overlay" onClick={onClose}>
       <div className="panel dialog">
         <p>{text}</p>
-        <small>Clique ou Enter para continuar</small>
+        <small>{t('dialog.continue')}</small>
       </div>
     </div>
   );

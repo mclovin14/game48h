@@ -15,3 +15,16 @@ b3305c88-3fa6-4fa7-88f3-49d1605f5548 death_east_09 death_east_10 death_east_11
 8b578c78-1550-4ff2-bdc9-c484179b1084 death_east_18 death_east_19 death_east_20
 bd2d6f1c-9801-446d-ae8d-cf5fbef38f1b death_east_21 death_east_22 death_east_23
 56930e20-7892-4480-900b-8eb126f22075 aim_gun_east_05 aim_gun_east_06 aim_gun_east_07 (refeito, ref = aim_04)
+77314ca0-70ed-4d49-910f-dc1f5af6dd74 run_gun_east_00 run_gun_east_01 run_gun_east_02 (ref police_master_base_east, seed 1911)
+ba88d1f5-db48-4dcf-ad4a-2df425d0918a run_gun_east_03 run_gun_east_04 run_gun_east_05
+959d1ec0-7b38-4858-8679-1f8f07f2fcd5 run_gun_east_06 run_gun_east_07 run_gun_east_08
+4b1e0af6-e211-4e29-bece-ae22c2224a90 reload_gun_east_00 reload_gun_east_01 reload_gun_east_02
+6d91b3d3-af4b-4bd1-b147-fb71ac0b0df1 reload_gun_east_03 reload_gun_east_04 reload_gun_east_05
+ce022cf3-f1c4-4730-b988-2829fc531d7a reload_gun_east_06 reload_gun_east_07 reload_gun_east_08
+86635f06-393d-41de-908a-2a282701c407 reload_gun_east_09 reload_gun_east_10
+1705711b-53bf-4ddb-9555-01424f697c90 jump_gun_east_00 jump_gun_east_01 jump_gun_east_02 (ref police_master_base_east, seed 1911; fase 3 do jump_crouch_cutscene.md)
+eb1f196d-498d-4081-8451-c47da467fa39 jump_gun_east_03 jump_gun_east_04 jump_gun_east_05
+22138a97-e1dd-4d18-8cce-887ef6b0e6fe jump_gun_east_06 jump_gun_east_07 jump_gun_east_08
+eae67ac5-01c7-4494-80e4-acb3786a3772 jump_gun_east_09 jump_gun_east_10
+026fcf2a-aee1-404e-8032-fb6fde98f308 crouch_gun_east_00 crouch_gun_east_01 crouch_gun_east_02 (ajoelhado)
+3c7a4bd7-7056-4935-998b-8a8b5aad3d84 crouch_gun_east_03 crouch_gun_east_04 crouch_gun_east_05

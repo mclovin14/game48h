@@ -52,7 +52,7 @@ A Adriana é sequestrada por mercenários. Ela é noiva do Kael e filha do gover
 | Nome | Papel | Situação |
 |---|---|---|
 | **Kael** | Protagonista, policial. Começa só com pistola e distintivo, sem nenhuma vantagem policial. | Sprites em produção |
-| **Adriana** | Noiva do Kael e objetivo do resgate. Não tem arco próprio. | Sem arte |
+| **Adriana** | Noiva do Kael e objetivo do resgate. Não tem arco próprio. Ruiva de cabelo longo, olhos verdes, vestido vermelho e salto preto. | Base pronta (`assets/characters/adriana/`) |
 | **Geraldo** | Delegado e mandante do sequestro. Não aparece no prédio da Capital. | Sem arte |
 | **Roberto** | Tenente, braço direito do Geraldo, corrupto. Chefe da quadra 1. | Sem arte |
 | **Governador** | Pai da Adriana. Corrupto. | Sem nome, sem arte |

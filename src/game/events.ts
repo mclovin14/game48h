@@ -2,16 +2,35 @@
 // O tipo GameEvents lista todos os eventos e os dados de cada um; nome ou dado errado não compila.
 
 export type BulletType = 'lethal' | 'nonLethal';
+/** Quem fala na cutscene (retrato e nome na caixa de fala). */
+export type Speaker = 'adriana' | 'kael';
 
 export interface GameEvents {
-  'hud:ammo': { lethal: number; nonLethal: number; selected: BulletType };
+  /** lethal e nonLethal: reserva fora do pente. O pente (mag) tem sempre o tipo selecionado. */
+  'hud:ammo': { lethal: number; nonLethal: number; selected: BulletType; mag: number; magSize: number; reloading: boolean };
   'hud:life': { current: number; max: number };
   'hud:morale': { current: number; max: number };
   'hud:weapon': { armed: boolean };
   'dialog:open': { text: string };
+  /** Cutscene (Phaser → React): começa (faixas pretas, sem HUD), tela de texto, fala com retrato, termina. */
+  /** `black`: começa com a tela preta (a cutscene abre com a tela de texto). */
+  'cutscene:start': { black: boolean };
+  /** `final`: a tela preta fica depois do Enter (o jogo acaba em seguida). */
+  'cutscene:intro': { text: string; final?: boolean };
+  'cutscene:line': { speaker: Speaker; text: string };
+  /** Ilustração em tela cheia (o Phaser desenha): sem faixas pretas; espera o Enter. */
+  'cutscene:art': undefined;
+  'cutscene:end': undefined;
+  /** Cutscene (React → Phaser): o jogador fechou o texto (Enter) ou pulou a cutscene (Esc). */
+  'cutscene:next': undefined;
+  'cutscene:skip': undefined;
   'game:pause': undefined;
   'game:resume': undefined;
   'game:restart': undefined;
+  /** Fim da fase (depois do final): volta ao título. */
+  'game:ended': undefined;
+  /** Volumes das opções, de 0 a 1: multiplicam os volumes de cada som. */
+  'settings:volume': { music: number; sfx: number };
 }
 
 type EventName = keyof GameEvents;
@@ -20,12 +39,12 @@ type Args<K extends EventName> = GameEvents[K] extends undefined ? [] : [GameEve
 
 class EventBus {
   private handlers: { [K in EventName]?: Set<Handler<K>> } = {};
-  // Os eventos 'hud:*' guardam o último valor: quem se inscreve depois recebe na hora.
+  // Os eventos 'hud:*' e 'settings:*' guardam o último valor: quem se inscreve depois recebe na hora.
   private last: Partial<GameEvents> = {};
 
   emit<K extends EventName>(event: K, ...args: Args<K>): void {
     const payload = args[0] as GameEvents[K];
-    if (event.startsWith('hud:')) this.last[event] = payload;
+    if (event.startsWith('hud:') || event.startsWith('settings:')) this.last[event] = payload;
     this.handlers[event]?.forEach((h) => h(payload));
   }
 

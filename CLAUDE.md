@@ -77,6 +77,7 @@ npm run build        # confere os tipos e gera dist/
 ```
 
 - O Vite serve `assets/` direto (`publicDir`): carregue `player/...` e `enemies/...`, sem copiar arquivo.
+- Build web: `npm run build` gera `dist/` com caminhos relativos (`base: './'`), que roda em qualquer pasta do servidor; os `drafts/` e `sounds/source/` ficam de fora. Para publicar, suba o conteúdo de `dist/` (fica fora do git). No CSS, use `url('/...')` (o Vite reescreve).
 - Animação nova: acrescente em `ANIMS` (ms por quadro e linha do chão) e na lista do personagem em `humanoid.ts`.
 - Rode `npm run typecheck` antes de entregar qualquer mudança de código, e teste no navegador o que mudou.
 - React e Phaser não se importam: só conversam pelo `bus` de `events.ts`. Evento novo entra no tipo `GameEvents`.

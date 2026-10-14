@@ -58,6 +58,8 @@ As versões ficam travadas no `package-lock.json`. Não atualize pacote sem pedi
 
 ## Estado atual do projeto
 
+**Build web (14/10/2026):** `npm run build` gera `dist/` (~23 MB) com caminhos relativos (`base: './'` no `vite.config.ts`) e sem `drafts/` nem `sounds/source/` (plugin `dropDrafts`). Testado servido numa subpasta: título, jogo e game over sem erro nem arquivo faltando.
+
 **Versão 0.1 (14/10/2026, tag `v0.1`):** a quadra 1 jogável do começo ao fim. O resumo para quem chega fica no `README.md`; o que ficou fora, no `docs/later_ideas.md`.
 
 ### Design

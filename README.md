@@ -31,7 +31,10 @@ npm install          # uma vez
 npm run dev          # http://localhost:5173
 npm run typecheck    # confere os tipos
 npm run build        # confere os tipos e gera dist/
+npm run preview      # serve o dist/ para conferir
 ```
+
+**Publicar na web:** rode `npm run build` e suba o **conteúdo** da pasta `dist/` (o `index.html` na raiz) para qualquer hospedagem estática: itch.io (zip do conteúdo, tipo HTML), GitHub Pages, Netlify ou outra. Os caminhos são relativos, então funciona também numa subpasta. O `dist/` não vai para o git.
 
 ## Controles
 

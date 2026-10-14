@@ -203,13 +203,45 @@ export function loadSheets(scene: Phaser.Scene, ch: CharacterDef): void {
   }
 }
 
+const frameTotals = new Map<string, number>();
+
+/**
+ * Quadros de uma sheet. As sheets com mais de 8 quadros ficam em grade (8 por linha, tools/sprite_lib.py),
+ * e as células vazias do fim da última linha não contam.
+ */
+export function sheetFrames(scene: Phaser.Scene, key: string): number {
+  const known = frameTotals.get(key);
+  if (known !== undefined) return known;
+  const tex = scene.textures.get(key);
+  const img = tex.getSourceImage() as HTMLImageElement | HTMLCanvasElement;
+  const cols = Math.floor(img.width / FRAME);
+  const rows = Math.floor(img.height / FRAME);
+  let total = cols * rows;
+  if (rows > 1) {
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = FRAME;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
+    ctx.drawImage(img, 0, (rows - 1) * FRAME, img.width, FRAME, 0, 0, img.width, FRAME);
+    const empty = (c: number) => {
+      const a = ctx.getImageData(c * FRAME, 0, FRAME, FRAME).data;
+      for (let i = 3; i < a.length; i += 4) if (a[i] > 0) return false;
+      return true;
+    };
+    for (let c = cols - 1; c > 0 && empty(c); c--) total--;
+  }
+  frameTotals.set(key, total);
+  return total;
+}
+
 /** Cria as animações do personagem. Serve para qualquer textura com o mesmo padrão de sheets. */
 export function registerAnims(scene: Phaser.Scene, ch: CharacterDef): void {
   for (const a of ch.anims) {
     const key = animKey(ch, a);
     if (scene.anims.exists(key)) continue;
     const { ms, loop } = animDef(ch, a);
-    const frames = scene.anims.generateFrameNumbers(textureKey(ch, a)).map((f, i) => ({
+    const tex = textureKey(ch, a);
+    const frames = scene.anims.generateFrameNumbers(tex, { start: 0, end: sheetFrames(scene, tex) - 1 }).map((f, i) => ({
       ...f,
       duration: Array.isArray(ms) ? (ms[i] ?? ms[ms.length - 1]) : ms,
     }));
@@ -267,6 +299,6 @@ export class Humanoid extends Phaser.GameObjects.Sprite {
   }
 
   frameCount(anim: AnimName): number {
-    return this.scene.textures.get(textureKey(this.ch, anim)).frameTotal - 1;
+    return sheetFrames(this.scene, textureKey(this.ch, anim));
   }
 }

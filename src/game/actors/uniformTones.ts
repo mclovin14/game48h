@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { FRAME, POLICE, textureKey } from '../anims/humanoid';
+import { FRAME, POLICE, sheetFrames, textureKey } from '../anims/humanoid';
 import { ALL_LOOKS, lookDef } from './Police';
 
 // Troca de tom da farda no Boot: copia a sheet de cada cabeça num canvas e troca as 6 cores da farda.
@@ -45,6 +45,8 @@ export function recolorSheet(scene: Phaser.Scene, srcKey: string, dstKey: string
   }
   ctx.putImageData(data, 0, 0);
   tex.refresh();
-  // quadros numerados como os de uma spritesheet
-  for (let f = 0; f < img.width / FRAME; f++) tex.add(f, 0, f * FRAME, 0, FRAME, FRAME);
+  // quadros numerados como os de uma spritesheet (grade de até 8 por linha)
+  const cols = Math.floor(img.width / FRAME);
+  const total = sheetFrames(scene, srcKey);
+  for (let f = 0; f < total; f++) tex.add(f, 0, (f % cols) * FRAME, Math.floor(f / cols) * FRAME, FRAME, FRAME);
 }

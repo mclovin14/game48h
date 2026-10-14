@@ -12,6 +12,7 @@ from pathlib import Path
 
 import numpy as np
 from PIL import Image, ImageDraw
+from sprite_lib import sheet_frames
 
 POLICE = Path("assets/enemies/police")
 VARIANTS = ["a", "b", "c"]
@@ -46,10 +47,8 @@ def recolor(img: np.ndarray, src: list[list[int]], dst: list[list[int]]) -> np.n
 
 
 def frame(v: str, anim: str, i: int) -> np.ndarray:
-    sheet = np.array(Image.open(POLICE / f"police_{v}" / f"police_{v}_{anim}_east_sheet.png").convert("RGBA"))
-    n = sheet.shape[1] // 128
-    i = i % n
-    return sheet[:, i * 128 : (i + 1) * 128]
+    frames = sheet_frames(POLICE / f"police_{v}" / f"police_{v}_{anim}_east_sheet.png")
+    return frames[i % len(frames)]
 
 
 def main() -> None:

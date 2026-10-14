@@ -304,3 +304,5 @@ Números e curvas que só fazem sentido jogando. Não decidir antes de testar.
 | 13/10/2026 | Policiais mais espertos: mais rápidos, menos previsíveis, adivinham se o Kael vai pular ou agachar, desviam da bala dele e aproveitam a recarga | Usuário |
 | 14/10/2026 | Tela de game over: escurece, "GAME OVER", "Você perdeu", frase triste e Enter reinicia | Usuário |
 | 14/10/2026 | Versão 0.1 do jogo fechada: README criado, documentos atualizados, commit e tag `v0.1` publicados na `main` | Usuário ("fechamos então a primeira versão do game") |
+| 14/10/2026 | Spritesheets em grade de até 8 quadros por linha: as tiras largas travavam o jogo publicado | Erro relatado pelo usuário no build da web |
+| 14/10/2026 | Versão 0.1.1 (tag `v0.1.1`): a 0.1 com o build da web corrigido (caminhos relativos, sem rascunhos, sheets em grade) | Usuário |

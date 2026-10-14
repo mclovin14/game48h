@@ -1,6 +1,6 @@
 # Saves Her
 
-**Versão 0.1** (14/10/2026)
+**Versão 0.1.1** (14/10/2026): a 0.1 com a correção do jogo publicado na web (sheets em grade).
 
 Metroidvania de ação em vista lateral, em pixel art, que roda no navegador. Kael, um policial sozinho com uma pistola, atravessa as barricadas da própria polícia para resgatar a noiva, Adriana. A cada tiro ele escolhe entre matar ou só derrubar, e essa escolha enche a barra de índole e decide o final.
 

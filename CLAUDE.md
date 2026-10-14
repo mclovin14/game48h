@@ -36,7 +36,7 @@ Os documentos ficam em `docs/`. Só o `CLAUDE.md` fica na raiz, porque o Claude 
 assets/player/           sprites do Kael
   <anim>_<dir>/          quadros soltos: <anim>_<dir>_00.png ...
   player_<anim>_<dir>.gif         prévia
-  player_<anim>_<dir>_sheet.png   spritesheet horizontal
+  player_<anim>_<dir>_sheet.png   spritesheet (grade de até 8 quadros por linha)
   player_base_east.png / player_base_gun_east.png   bases de referência
   drafts/                brutos do PixelLab (run_raw/, run_gun_raw/, run_gun_stop_raw/, reload_keys/, reload_raw/, kneel_keys/, kneel_raw/, melee_keys/, melee_raw/)
 assets/characters/adriana/ Adriana: base, adriana_<anim>_east_sheet.png (held, cry, freed, kneel, hug), adriana_portrait.png; drafts/ (base_raw, keys, raw)
@@ -45,7 +45,7 @@ assets/enemies/police/   policiais inimigos (master + variantes police_a/b/c, ra
 references/              imagens de referência (kael/, environments/)
 docs/                    documentos (decisions, GDD, story, handoff, tests, later_ideas)
   plan/                  planos de implementação aprovados
-tools/                   scripts Python: sprite_lib.py (base), build_hud.py (peças da HUD), build_reload_sfx.py (recarga rápida), shoot_fx.py (tiro), build_police_master.py, build_police_variants.py (variantes do policial), build_uniform_tones.py (tons de farda), build_facade_fit.py (escala das fachadas), build_background.py (fachadas), build_ground.py (chão), build_props.py (objetos), build_sfx.py (corta os passos), build_run.py (corrida do Kael), build_reload.py (recarga do Kael), build_jump.py (pulo do Kael), build_crouch.py (agachar do Kael), build_adriana.py (animações da Adriana), build_mercenary.py (tons e animações dos mercenários), build_melee.py (combo do Kael: jab, direto, chute), build_go_arrow.py (seta de siga em frente), build_endings.py (ilustrações dos finais: placas e sheets)
+tools/                   scripts Python: sprite_lib.py (base), build_hud.py (peças da HUD), build_reload_sfx.py (recarga rápida), shoot_fx.py (tiro), build_police_master.py, build_police_variants.py (variantes do policial), build_uniform_tones.py (tons de farda), build_facade_fit.py (escala das fachadas), build_background.py (fachadas), build_ground.py (chão), build_props.py (objetos), build_sfx.py (corta os passos), build_run.py (corrida do Kael), build_reload.py (recarga do Kael), build_jump.py (pulo do Kael), build_crouch.py (agachar do Kael), build_adriana.py (animações da Adriana), build_mercenary.py (tons e animações dos mercenários), build_melee.py (combo do Kael: jab, direto, chute), build_go_arrow.py (seta de siga em frente), build_endings.py (ilustrações dos finais: placas e sheets), build_grid_sheets.py (converte sheets em tira para grade)
 assets/ui/               hud/ (peças da HUD, tools/build_hud.py), title_logo.png (PixelLab), title_bg.png (fundo do menu), go_arrow.png (seta de siga em frente); drafts/title_logo/ = outras opções do logo
 assets/cutscenes/        ilustrações dos finais (ending_happy/, ending_sad/): base, <nome>_sheet.png (8 quadros 160x90), GIF de prévia; drafts/ (opções e raw/ do PixelLab)
 assets/fonts/            pixelify_sans.ttf (fonte dos menus, OFL)
@@ -91,6 +91,7 @@ Nome da animação: `<ação>[_gun]_<direção>`, ex.: `walk_gun_east`, `death_e
 ## Padrão de sprites
 
 - Quadro **128x128**, fundo transparente, virado para **East** (o jogo espelha para West).
+- Spritesheet em **grade de no máximo 8 quadros por linha** (1024 px; `sprite_lib.save_anim` já salva assim). Tira mais larga que ~1500 px chega reduzida em algumas hospedagens e trava o jogo. O jogo conta os quadros sem as células vazias do fim (`sheetFrames` em `humanoid.ts`).
 - Chão: sprites sem arma pisam em **y=120**; com arma em **y=121**.
 - Paleta fixa de 14 cores tirada de `player_base_east.png`. Cores fora da paleta só para efeito (flash do tiro, luz, sangue `(176,32,36)` e `(110,16,24)`), e sempre avisando o usuário.
 - O rosto precisa ser o da base: nunca olhando para a câmera.

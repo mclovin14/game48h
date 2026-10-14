@@ -22,17 +22,38 @@ def load_frames(folder, name):
     return [load(os.path.join(folder, f)) for f in files]
 
 
+# Sheet em grade de no máximo 8 quadros por linha (1024 px): tiras mais largas que ~1500 px
+# chegam reduzidas em algumas hospedagens e o Phaser fica sem quadros (14/10/2026).
+SHEET_COLS = 8
+
+
+def sheet_image(imgs, size=128):
+    """Monta a sheet em grade (linhas de SHEET_COLS quadros, da esquerda para a direita)."""
+    cols = min(len(imgs), SHEET_COLS)
+    rows = -(-len(imgs) // cols)
+    sheet = Image.new('RGBA', (size * cols, size * rows))
+    for k, im in enumerate(imgs):
+        sheet.paste(im, (size * (k % cols), size * (k // cols)))
+    return sheet
+
+
+def sheet_frames(path, size=128):
+    """Quadros de uma sheet (tira ou grade), sem as células vazias do fim."""
+    a = load(path)
+    cells = [a[y:y + size, x:x + size] for y in range(0, a.shape[0], size) for x in range(0, a.shape[1], size)]
+    while cells and not cells[-1][..., 3].any():
+        cells.pop()
+    return cells
+
+
 def save_anim(frames, folder, name, sheet_path=None, gif_path=None, durations=90):
-    """Salva <folder>/<name>_NN.png, a sheet horizontal e um GIF de prévia (fundo branco, 3x)."""
+    """Salva <folder>/<name>_NN.png, a sheet em grade e um GIF de prévia (fundo branco, 3x)."""
     os.makedirs(folder, exist_ok=True)
     imgs = [Image.fromarray(f, 'RGBA') for f in frames]
     for k, im in enumerate(imgs):
         im.save(os.path.join(folder, f'{name}_{k:02d}.png'))
     if sheet_path:
-        sheet = Image.new('RGBA', (128 * len(imgs), 128))
-        for k, im in enumerate(imgs):
-            sheet.paste(im, (128 * k, 0))
-        sheet.save(sheet_path)
+        sheet_image(imgs).save(sheet_path)
     if gif_path:
         gl = []
         for im in imgs:

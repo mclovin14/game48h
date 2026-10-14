@@ -26,6 +26,7 @@ Ao terminar uma fase, acrescente os cenários dela aqui. O status do plano fica 
 | 8 | `playtest_fixes_2.md` | 1 a 3 | passou, aprovado (fases 2 e 3 testadas juntas pelo usuário, nada pendente) |
 | 9 | `enemy_ai_difficulty.md` | 1 a 3 (policiais) | passou na medição da IA; aguardando o teste do usuário |
 | 10 | (sem plano) tela de game over | 1 | passou no navegador; aguardando o teste do usuário |
+| 11 | (sem plano) build da web e sheets em grade | 1 | passou no navegador; aguardando a publicação do usuário |
 
 **Itens que seguem em aberto mesmo com os planos aprovados** (não são falha de teste, são escolhas ou números para afinar):
 - Números [TESTE] de vida, dano, munição, ondas, chuva, sangue e sombra (`decisions.md`, seção 3).
@@ -213,3 +214,16 @@ Pedido direto do usuário, sem plano. Medição com Puppeteer (tecla K mata o Ka
 | 10.4 | Enter de novo depois de reiniciar não reinicia outra vez | passou |
 | 10.5 | Com a pausa aberta sobre o game over, o Enter fica com o menu | não verificado (só no código) |
 | 10.6 | Visual e frases agradam | aguardando o teste do usuário |
+
+## 11. Build da web e sheets em grade (14/10/2026)
+
+Erro relatado pelo usuário no jogo publicado: "SpriteSheet frame dimensions will result in zero frames" nas sheets de morte, rajada e recarga, e o jogo travava.
+
+| # | Cenário | Resultado |
+|---|---|---|
+| 11.1 | `dist/` servido numa subpasta: título, jogo e game over carregam sem 404 nem erro | passou |
+| 11.2 | As 35 sheets convertidas para grade têm os mesmos quadros, na mesma ordem, das tiras do git | passou |
+| 11.3 | As 193 animações têm o mesmo número de quadros de antes | passou |
+| 11.4 | Morte e nocaute do policial, rajada, recarga, tiro agachado, nocaute e morte do mercenário e morte do Kael tocam até o fim, sem erro nem aviso | passou |
+| 11.5 | Nenhuma imagem do `dist/` passa de 1408 px de largura (a maior tem 1376) | passou |
+| 11.6 | O jogo publicado na hospedagem do usuário | pendente (o usuário sobe o `dist/` novo) |

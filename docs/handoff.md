@@ -6,9 +6,10 @@ Use este arquivo para continuar o projeto em outra IA (Gemini, GPT ou outra sess
 1. `CLAUDE.md` (raiz): regras de trabalho, estrutura de pastas, como rodar, padrão de sprites e pipeline. Vale para qualquer IA, não só o Claude.
 2. Este `docs/handoff.md`.
 3. `docs/decisions.md` (fonte da verdade) e `docs/GDD.md`.
+   Para saber o que já foi testado e o que ficou sem verificação: `docs/tests.md`. O que ficou fora da versão 0.1: `docs/later_ideas.md`.
 4. Se a tarefa for de história: `docs/story.md`. Se for continuar um plano: o arquivo em `docs/plan/`.
 
-Atualizado em 12/10/2026 (fim da sessão das fases 5 e 6 do `world_camera_enemies.md`).
+Atualizado em 14/10/2026: **versão 0.1 do jogo fechada** (tag `v0.1` na `main`). Nesta sessão entraram a IA esperta dos policiais, a tela de game over e o `README.md`; o GDD foi para a versão 0.5.
 
 ---
 
@@ -57,6 +58,8 @@ As versões ficam travadas no `package-lock.json`. Não atualize pacote sem pedi
 
 ## Estado atual do projeto
 
+**Versão 0.1 (14/10/2026, tag `v0.1`):** a quadra 1 jogável do começo ao fim. O resumo para quem chega fica no `README.md`; o que ficou fora, no `docs/later_ideas.md`.
+
 ### Design
 - Premissa, elenco, barra de índole, arsenal (pistola com bala letal e não letal) e quadra 1 decididos.
 - Muita coisa em aberto: ver `docs/decisions.md`, seção 2. A que mais trava é a progressão do Kael (item 10).
@@ -74,11 +77,11 @@ As versões ficam travadas no `package-lock.json`. Não atualize pacote sem pedi
 Plano implementado: `docs/plan/web_stack_setup.md`. Rodar com `npm install` e `npm run dev`, depois abrir http://localhost:5173.
 
 O que a cena `Test` faz:
-- Tela de título (React) → cena de teste → caixa de diálogo com os controles (aparece uma vez).
+- Tela de título (React) → cutscene de abertura → cena de teste. A caixa de controles saiu: no começo, uma dica curta (`Toast`) avisa "Controles: Esc → Opções → Controles", uma vez por sessão. A lista de teclas fica em Opções → Controles.
 - O Kael começa **sem arma**. A tecla **1** saca ou guarda, só com ele livre (sem estar mirando nem atirando).
 - **Arma (fase 2 do `sound_run_reload_menu.md`):** pente de 8 do tipo selecionado e reserva por tipo (`mag` e `reserve` em `Test.ts`). Depois do tiro ele segura a mira (só o recuo repete); abaixa depois de 1,2 s sem tiro. **R** recarrega parado (modo `reloading`); o pente vazio recarrega sozinho; sem bala nenhuma, clique seco. Q troca o tipo e recarrega.
-- **A/D ou setas** andam, com ou sem arma, por uma fase de 4 telas (3840 px).
-- **Cenário e ciclo de tempo** (fase 2): céu em degradê feito no código, silhueta da cidade no fator 0,3 e fachadas das lojas no plano do jogador, com postes nas divisas entre os prédios. Em 8 minutos a cena vai do entardecer (17:30) à noite (19:30) e para ali. Lojas e postes acendem piscando, cada um na sua hora, e a luz ambiente tinge o Kael, o policial e o chão. O relógio fica no canto superior direito, e **[** e **]** voltam ou avançam 12 minutos.
+- **A/D ou setas** andam, com ou sem arma, por uma fase de 5 telas (4800 px).
+- **Cenário e ciclo de tempo** (fase 2): céu em degradê feito no código, silhueta da cidade no fator 0,3 e fachadas das lojas no plano do jogador, com postes nas divisas entre os prédios. Em 3 minutos (era 8) a cena vai do entardecer (17:30) à noite (19:30) e para ali. Lojas e postes acendem piscando, cada um na sua hora, e a luz ambiente tinge o Kael, o policial e o chão. O relógio fica no canto superior direito, e **[** e **]** voltam ou avançam 12 minutos.
 - **Câmera** (fase 1 do plano `world_camera_enemies.md`): segue o Kael com zona morta de 1/4 da tela, olhar à frente de 120 px para o lado em que ele olha, suavização e limites da fase. A tecla **C** mostra a zona morta (azul) e o ponto seguido (amarelo).
 - **Botão direito** (segurar) mira: toca `aim_gun` e congela no último quadro. Ao soltar, toca `aim_gun` ao contrário.
 - **Botão esquerdo** atira com a mira levantada. Sem mira, levanta a arma e atira sozinho (`pendingShot`).
@@ -90,15 +93,19 @@ O que a cena `Test` faz:
   - no segundo, a bala letal toca `death` e tira 1 ponto da índole, e a não letal toca `knockout`.
 - Ele fica virado para o Kael enquanto está em pé e atira de volta (ver Combate, abaixo).
 - **Ondas (fase 5 do `world_camera_enemies.md`):** perto de cada barricada (x 2440 e 3700) a câmera trava, o Kael fica preso na tela e os policiais entram um de cada vez pelos lados definidos em `level_1.ts`. Cada um tem uma aparência (cabeça + tom de farda) do `EnemyDirector`, sem repetir na tela nem em seguida e, quando dá, sem repetir cabeça ou tom de quem está na tela. Quando a última onda cai, a câmera solta. **F1** mostra a seed, a onda e a aparência de cada policial; `?seed=...` na URL repete o sorteio.
-- **Combate (fase 6 do `world_camera_enemies.md`):** o policial parado mira, segura a mira um instante (aviso) e atira; o tiro acerta com chance e tira vida do Kael, que pisca em vermelho. Vida zerada: o Kael morre e Enter reinicia. O nocaute solta uma caixa de munição (`actors/Loot.ts`) que o Kael pega passando por cima.
+- **Combate (fase 6 do `world_camera_enemies.md`):** o policial parado mira, segura a mira um instante (aviso) e atira; o tiro acerta com chance e tira vida do Kael, que pisca em vermelho. Vida zerada: o Kael morre, a tela de game over (`ui/GameOver.tsx`, evento `game:over`) escurece com "GAME OVER", "Você perdeu" e uma frase triste, e Enter reinicia. O nocaute solta uma caixa de munição (`actors/Loot.ts`) que o Kael pega passando por cima.
 - **Pulo (fase 1 do `jump_crouch_cutscene.md`):** Espaço, W ou ↑ pula para a frente (`jump` / `jump_gun`), 180 px parado ou 240 px correndo, 85 px de altura. A cena move o Kael numa parábola (`startJump`, `updateJump`, `endJump`; modo `jumping`). Os tiros do policial agora são balas que voam (`actors/Bullets.ts`) e acertam pela caixa do corpo (`bodyBox`), então o pulo desvia de verdade.
 - **Agachar (fase 2 do `jump_crouch_cutscene.md`):** segurar S, ↓ ou Ctrl (`crouch` / `crouch_gun`; levantar toca ao contrário; modo `crouching` na troca e `crouched` na pose). Agachado não anda, mira e atira com `crouch_aim_gun` e `crouch_shoot_gun`, e a caixa do corpo cai para 86 px: o tiro do policial em pé (93 ± 3 px) passa por cima. A pose é **ajoelhada** (um joelho no chão, refeita a pedido do usuário); a mira e o tiro ajoelhados são os de pé com o tronco 18 px mais baixo (`tools/build_crouch.py`). Recarga agachada sem animação própria.
 - **Pulo e agachar dos policiais (fase 3 do `jump_crouch_cutscene.md`, aguardando teste):** master e variantes com `jump_gun`, `crouch_gun` e mira, tiro e recarga ajoelhados (tronco em pé descido 18 px, como no Kael). IA do `patrol` em `Police.ts` (estados `posture` e `jumping`, `CopTarget` com o que ele sabe do Kael): agacha para recarregar, copia a postura do Kael parado, ajoelhado atira baixo (64 px, o pulo desvia) e tem 86 px de caixa, pula para a frente ao chegar (40%) ou quando o Kael mira nele (15%). Valores [TESTE] no `decisions.md`.
 - **Luta com os mercenários e finais (fase 7 do `jump_crouch_cutscene.md`, aguardando teste):** na última tela (`actors/BossFight.ts`) a câmera trava e os três cercam o Kael (um corre por trás). Antes da luta, eles só levam tiro com o Kael já na última tela (corrige a câmera travando na arena com o Kael na barricada). Barra de vida e "!" de mira em vermelho em cada um; um mira por vez. Vida 5, o chute do combo tira 3; matar não tira índole. Quando os três caem, toca o final (`cutscene/ending.ts`): índole ≥ 50% feliz (abraço), < 50% triste (último tiro de um mercenário caído, o Kael morre); a tela de texto "FIM" leva ao título (`game:ended`).
 - **Ilustrações animadas dos finais (fase 8, aguardando teste):** depois das falas, antes da tela de texto "FIM", o passo `art` do `Cutscene` mostra a ilustração do final em tela cheia (6x, centrada sobre preto) e o React esconde as faixas (`cutscene:art`). Feliz: o beijo (opção 3, placas "ÓTICA" e "MODAS"), música a 60%. Triste: ela com o Kael no colo na chuva (opção 1), sem música. Sheets de 8 quadros 160x90 em `assets/cutscenes/ending_*/` (`tools/build_endings.py`; brutos do PixelLab em `drafts/raw/`), carregadas por `cutscene/endingArt.ts`.
 - **Seta de siga em frente:** quando a última onda de uma barricada cai (`Waves.onCleared`), `world/GoArrow.ts` mostra a seta `assets/ui/go_arrow.png` (desenhada em `tools/build_go_arrow.py`) piscando à direita, até o Kael andar 360 px ou outra arena travar. Aguardando o teste.
-- **K** testa a morte do Kael. **R** reinicia a cena. **Esc** pausa (menu React: Continuar, Reiniciar cena, Voltar ao título).
-- O HUD mostra vida, índole, a arma ("Pistola" ou "Sem arma") e a munição dos dois tipos, com o tipo selecionado em destaque.
+- **K** testa a morte do Kael. **R** recarrega (não reinicia mais; depois da morte, Enter reinicia). **Esc** pausa (menu React: Continuar, Opções, Reiniciar cena, Voltar ao título).
+- **HUD nova (plano `playtest_fixes_1.md`, fases 8 e 9):** peças do PixelLab em `assets/ui/hud/` (`tools/build_hud.py`). À esquerda, o rosto do Kael, o nome, a barra de vida e a de índole com uma balança (cor e balança pendendo mudam com o valor). À direita, o seletor de arma (punho ou pistola; trocar mostra os dois por ~1 s), as balas do pente, que enchem uma a uma na recarga, e os pentes de reserva (vermelho letal, azul não letal). Escala inteira por `--px` em `src/ui/Hud.tsx`.
+- **Sangue (fase 4, `actors/Blood.ts`):** respingo na direção da bala (tiro letal e todo tiro no Kael; a não letal só dá um respingo pequeno), gotas que caem e viram mancha no chão, e quem fica em pé pinga por um tempo. O ponto do acerto vem do `Bullets` (`HitPoint`).
+- **Chuva (fase 7, `world/Rain.ts`):** 50% por jogada (seed dos policiais), começa entre 70% e 85% do ciclo, com dois planos de riscos, respingos no chão, véu azul e o loop `rain_loop` (CC0). A tecla **N** liga e desliga na cena de teste.
+- **Sombras (`world/Shadows.ts`):** um Graphics só, criado em `buildWorld` antes dos personagens (todas as sombras atrás de todos). Cada `Humanoid` se inscreve no construtor (`shadowsOf(scene)?.add(this)`); a cena atualiza no POST_UPDATE. A largura vem do alfa das 4 linhas de baixo do quadro atual (sheet lido uma vez num canvas), espelhada pelo `facing`.
+- **Corpos no chão (fase 3):** o mercenário morto ou nocauteado e o policial nocauteado deitam no chão, com a arma solta na frente (`settle` em `build_mercenary.py`; o mesmo em `build_police_master.py`).
 - O jogo pausa enquanto houver diálogo ou menu aberto, e a música e os sons pausam junto.
 - **Sons (fase 1 do `sound_run_reload_menu.md`):** OST da quadra 1 em loop com fade; tiro da Colt 1911 no Kael e "single shot" nos policiais; passos no `walk` e no `walk_gun` do Kael e dos policiais (quadros 0 e 4). O som dos policiais cai com a distância e vai para o lado em que estão. Volume da música e dos efeitos nas Opções (a tecla M saiu na fase 6).
 
@@ -115,8 +122,6 @@ Valores provisórios da cena, todos [TESTE] e no topo de `src/game/scenes/Test.t
 
 Limitações conhecidas:
 - Não existe animação de andar mirando, então o Kael para de andar enquanto mira.
-- O policial morto não solta loot (só o nocauteado).
-- O chão ainda é provisório (faixa cinza). Tileset e objetos vêm na fase 3.
 - `Scale.FIT` escala por um fator quebrado, e em algumas janelas o pixel pode ficar desigual. Dá para trocar por escala inteira se incomodar.
 - O build avisa que o pacote do Phaser é grande (mais de 500 kB). Não atrapalha agora.
 - O build copia `assets/` inteiro, inclusive os `drafts/`. Antes de publicar, separar o que vai junto.
@@ -128,7 +133,7 @@ Limitações conhecidas:
 ```
 src/main.tsx               liga o React
 src/App.tsx                estado da tela (title | playing), pausa e diálogo
-src/ui/                    Hud.tsx, Menu.tsx (título e pausa), Options.tsx, Dialog.tsx, settings.ts (volumes, tela cheia, useLang), useMenuKeys.ts (setas, Enter, Esc) — só React, sem Phaser
+src/ui/                    Hud.tsx, Menu.tsx (título e pausa), Options.tsx, Controls.tsx (lista de teclas, aberta pelas Opções), Toast.tsx (dica curta: `toast:show`), GameOver.tsx (derrota: `game:over`), Dialog.tsx, settings.ts (volumes, tela cheia, useLang), useMenuKeys.ts (setas, Enter, Esc) — só React, sem Phaser
 src/i18n/                  pt_br.ts (padrão), en.ts (mesmas chaves, cobrado pelo TS), index.ts (t, getLang, setLang); sem React nem Phaser, os dois leem
 src/game/PhaserGame.tsx    cria o Phaser.Game no useEffect e destrói no cleanup
 src/game/screen.ts         WIDTH 960, HEIGHT 540, GROUND_Y 470
@@ -161,7 +166,7 @@ src/game/scenes/Test.ts    cena de teste
 **Regras:**
 - **Textos da interface** ficam em `src/i18n/` (nunca escritos direto no componente ou na cena): chave nova no `pt_br.ts` e no `en.ts`, e use `t('chave')`.
 - **React e Phaser não se importam.** Os dois só se falam pelo `bus` de `events.ts`. Para criar um evento, acrescente o nome e o tipo dos dados em `GameEvents`, e o TypeScript passa a cobrar o uso certo.
-  - Phaser → React: `hud:ammo`, `hud:life`, `hud:morale`, `hud:weapon`, `dialog:open`.
+  - Phaser → React: `hud:ammo`, `hud:life`, `hud:morale`, `hud:weapon`, `dialog:open`, `toast:show` (o começo da fase avisa onde ficam os controles; a caixa de controles não abre mais).
   - React → Phaser: `game:pause`, `game:resume`, `game:restart`, `settings:volume` (música e efeitos, 0 a 1).
   - Os eventos `hud:*` e `settings:*` guardam o último valor e o entregam a quem se inscreve depois, para o HUD montar já preenchido.
   - `bus.on` devolve a função que cancela a inscrição. A cena cancela tudo no `SHUTDOWN` **e no `DESTROY`** (voltar ao título destrói o jogo sem `SHUTDOWN`; ouvinte esquecido trava o próximo jogo).
@@ -218,6 +223,13 @@ O padrão está no `CLAUDE.md` (128x128, East, chão em y=120 sem arma e y=121 c
 
 ## Pendências imediatas (ordem sugerida)
 
+- **Tela de game over (14/10/2026, sem plano):** `src/ui/GameOver.tsx` ouve `game:over` (emitido no `Test.killKael`), escurece em ~1,8 s, mostra "GAME OVER", "Você perdeu" e uma frase triste sorteada (`gameover.message.0..2` no i18n) e aceita Enter depois de ~3,6 s (`DELAY_MS`, `PROMPT_MS` [TESTE]); o Enter emite `game:restart`. Testada no navegador, aguardando o teste do usuário (visual e frases).
+- **Plano `docs/plan/enemy_ai_difficulty.md` (13/10/2026):** IA mais difícil. **Fases 1 a 3 feitas nos policiais** (IA esperta: `smart` no arquétipo `patrol`, `KaelHabits` e `dodge()` em `Gunner.ts`, aviso do tiro em `Test.shoot()`), aguardando o teste do usuário. Sequência de tiros com a arma apontada entre elas (`volley`, `volleyGapMs`, `volleyPauseMs` no `EnemyArchetype`). Falta: os mercenários (seguem com a IA simples; fase 1 propõe 2 rajadas e dois mirando juntos). Perguntas abertas na seção "Perguntas" do plano.
+
+- **Plano `docs/plan/playtest_fixes_2.md` (13/10/2026) completo e aprovado pelo usuário:** controles em Opções → Controles com dica curta, chuva mais baixa (calada na ilustração dos finais) e sombras nos pés do Kael, da Adriana, dos policiais e dos mercenários (`world/Shadows.ts`). Nada pendente. Próximo passo: escolher com o usuário o que vem depois (ver `GDD.md`, seção 9).
+- **Todos os planos anteriores estão aprovados** na jogada do usuário de 13/10/2026; o resultado de cada fase está em `docs/tests.md`. As linhas abaixo guardam o histórico de cada plano.
+- **Plano `docs/plan/playtest_fixes_1.md` (13/10/2026) completo, testado e aprovado pelo usuário** ("gostei muito do resultado"): texto da abertura, ciclo de 3 min, recarga de 1,21 s, recarga ajoelhada, HUD nova, seletor de arma, corpos no chão, sangue e chuva. Aprovar o som da chuva ("Rain (loopable)" de Ylmir, CC0) e ajustar os [TESTE] do sangue e da chuva.
+
 - **Pendente da cutscene:** a mão do mercenário fica ~9 px acima do pulso da Adriana (`HOLD_DX` [TESTE]); o texto de abertura fala em "prédio na Capital" e "cinco quadras", mas nesta fase de teste ela está no fim da rua. Perguntar ao usuário se ajusta o texto.
 
 - **Plano `docs/plan/melee_combo.md` (13/10/2026), antes da fase 6 do `jump_crouch_cutscene.md`.** Fases 1 a 3 feitas: drop de 50% no morto; animações `punch_1`, `punch_2`, `kick` aprovadas (`tools/build_melee.py`); combo no botão direito sem arma no jogo (`COMBO` em `Test.ts`, `Police.strike`). Aguardando o teste do usuário. Sons do combo no jogo (`swing`, `punch_hit`, `kick_hit`, CC0), aguardando aprovação. Nos mercenários (fase 7): socos dão o tranco e o chute tira 3 de 5 de vida [TESTE].
@@ -231,7 +243,7 @@ O padrão está no `CLAUDE.md` (128x128, East, chão em y=120 sem arma e y=121 c
 1. **Testar as fases 5 e 6 do plano `world_camera_enemies.md`** (feitas em 12/10/2026): ondas, dificuldade e leitura do tiro inimigo, loot; e **aprovar os 3 tons de farda** (`assets/enemies/police/drafts/uniform_tones_preview.png`; para mudar, editar `TONES` em `tools/build_uniform_tones.py` e rodar o script). O plano `police_variants.md` está concluído (só a troca de paleta por quadra ficou de fora, e os tons já usam a mesma técnica).
 2. Combate ainda em aberto: o que acontece na derrota (item 14), se o policial morto também solta loot (item 16) e uma animação de dano do Kael (hoje ele só pisca em vermelho).
 3. Perguntas de design ao usuário: nome da cidade do Geraldo, quem sabe da corrupção, o que a parte 1 da quadra 1 ensina, pulo e dash, e a progressão do Kael.
-4. Animações que faltam no Kael: dano, pulo, andar mirando e tiro não letal (ver `GDD.md` 6.4).
+4. Animações que faltam no Kael: dano, andar mirando e tiro não letal (ver `GDD.md` 6.4).
 
 ## Como atualizar este handoff
 

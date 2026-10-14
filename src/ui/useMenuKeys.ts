@@ -6,11 +6,13 @@ interface Handlers {
   onBack?: () => void;
   /** ← e →: -1 ou +1 no item selecionado (sliders e escolhas das opções). */
   onAdjust?: (i: number, dir: -1 | 1) => void;
+  /** Item selecionado ao abrir. */
+  initial?: number;
 }
 
 /** Setas sobem e descem, Enter escolhe, Esc volta. Devolve o item selecionado e quem o muda (mouse). */
-export function useMenuKeys({ count, onSelect, onBack, onAdjust }: Handlers): [number, (i: number) => void] {
-  const [index, setIndex] = useState(0);
+export function useMenuKeys({ count, onSelect, onBack, onAdjust, initial = 0 }: Handlers): [number, (i: number) => void] {
+  const [index, setIndex] = useState(initial);
   // handlers mudam a cada render; a escuta do teclado fica uma só
   const h = useRef({ index, count, onSelect, onBack, onAdjust });
   h.current = { index, count, onSelect, onBack, onAdjust };

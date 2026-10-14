@@ -1,12 +1,13 @@
-"""Agachar do Kael, ajoelhado (crouch, crouch_gun, crouch_aim_gun, crouch_shoot_gun).
+"""Agachar do Kael, ajoelhado (crouch, crouch_gun, crouch_aim_gun, crouch_shoot_gun, crouch_reload_gun).
 
 Pose: joelho esquerdo no chão, perna direita dobrada com o pé no chão (cavaleiro), pedido do usuário.
 O tronco ajoelhado é o tronco em pé 18 px mais baixo, então:
   - pernas: as do último quadro da IA em cada transição (gun_down_5 / down_5), que já vêm com os 4 tons
     do jeans e o branco do tênis. O keyframe key_aim_s1911.png (edit_image_pro_flash sobre o aim_gun_07)
     pinta o jeans de um azul só, e a cor pulava na pose parada; por isso ele só serviu de guia;
-  - crouch_aim_gun e crouch_shoot_gun: cada quadro do aim_gun / shoot_gun em pé, tronco descido 18 px
-    sobre as pernas armadas (rosto, braço e clarão idênticos aos de pé);
+  - crouch_aim_gun, crouch_shoot_gun e crouch_reload_gun: cada quadro do aim_gun / shoot_gun / reload_gun em pé,
+    tronco descido 18 px sobre as pernas armadas (rosto, braço e clarão idênticos aos de pé);
+    a recarga usa os tempos da de pé (RELOAD_FAST_MS em humanoid.ts, plano playtest_fixes_1.md);
   - kneel_gun.png (pose parada armada) = idle_gun_00 descido sobre as pernas armadas;
   - pose parada sem arma: o próprio down_5 (mãos no joelho e na coxa), com a cabeça da base. O
     key_nogun_s1911.png (idle_00 descido, mãos pela IA) só serviu de último quadro para o animate_image.
@@ -30,6 +31,8 @@ P = 'assets/player'
 KEYS = f'{P}/drafts/kneel_keys'
 RAW = f'{P}/drafts/kneel_raw'
 FRAME_MS = {'crouch': 50, 'crouch_gun': 50, 'crouch_aim_gun': 90}
+# recarga do Kael (igual a RELOAD_FAST_MS em src/game/anims/humanoid.ts)
+RELOAD_FAST_MS = [110, 90, 90, 110, 110, 100, 130, 100, 100, 110, 160]
 DROP = 18          # quanto o tronco desce do em pé para o ajoelhado
 WAIST = 81         # linha do quadro ajoelhado (chão 121) onde começa o jeans
 KNEE_UP = 6        # acima da cintura, a coxa da frente e o contorno do joelho sobem até 6 linhas,
@@ -185,14 +188,16 @@ def build():
     crouch_gun = transition('gun_down', pal_gun, 121, idle_gun, 'idle_gun', kneel_gun)
     aim = [on_legs(legs, load(f'{P}/aim_gun_east/aim_gun_east_{i:02d}.png')) for i in range(8)]
     shoot = [on_legs(legs, load(f'{P}/shoot_gun_east/shoot_gun_east_{i:02d}.png')) for i in range(8)]
+    reload = [on_legs(legs, load(f'{P}/reload_gun_east/reload_gun_east_{i:02d}.png')) for i in range(11)]
 
     save('crouch', crouch, 120, pal, FRAME_MS['crouch'])
     save('crouch_gun', crouch_gun, 121, pal_gun, FRAME_MS['crouch_gun'])
     save('crouch_aim_gun', aim, 121, pal_gun, FRAME_MS['crouch_aim_gun'])
     # clarão e luz quente ficam fora da paleta (efeito), como no shoot_gun em pé
     save('crouch_shoot_gun', shoot, 121, None, DURATIONS)
+    save('crouch_reload_gun', reload, 121, pal_gun, RELOAD_FAST_MS)
 
-    contact([[idle] + crouch, [idle_gun] + crouch_gun, aim, shoot], f'{RAW}/crouch_check.png', scale=2)
+    contact([[idle] + crouch, [idle_gun] + crouch_gun, aim, shoot, reload], f'{RAW}/crouch_check.png', scale=2)
     contact([crouch, crouch_gun], f'{RAW}/crouch_heads.png', crop=(40, 10, 84, 60), scale=5)
 
 

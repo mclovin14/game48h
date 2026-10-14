@@ -13,6 +13,13 @@ export interface BodyBox {
   bottom: number;
 }
 
+/** Onde a bala entrou no corpo e para que lado voava. */
+export interface HitPoint {
+  x: number;
+  y: number;
+  dir: 1 | -1;
+}
+
 export interface BulletStyle {
   /** px/s */
   speed: number;
@@ -55,8 +62,8 @@ export class Bullets<P> {
     this.list.push({ x0: x, y0: y, dir, slope, dist: 0, payload });
   }
 
-  /** Move as balas; cada uma acerta o primeiro alvo cujo corpo ela cruza neste quadro e chama `onHit(payload, índice do alvo)`. */
-  update(delta: number, targets: BodyBox[], onHit: (payload: P, target: number) => void): void {
+  /** Move as balas; cada uma acerta o primeiro alvo cujo corpo ela cruza neste quadro e chama `onHit(payload, índice do alvo, ponto)`. */
+  update(delta: number, targets: BodyBox[], onHit: (payload: P, target: number, at: HitPoint) => void): void {
     const step = this.style.speed * (delta / 1000);
     for (let i = this.list.length - 1; i >= 0; i--) {
       const b = this.list[i];
@@ -69,6 +76,7 @@ export class Bullets<P> {
       // o alvo mais perto do começo do trecho: a bala não atravessa um para acertar o de trás
       let hit = -1;
       let hitAt = Infinity;
+      let point: HitPoint = { x: 0, y: 0, dir: b.dir };
       targets.forEach((t, j) => {
         if (lo > t.x + t.halfW || hi < t.x - t.halfW) return;
         const x = Phaser.Math.Clamp(t.x, lo, hi);
@@ -77,11 +85,14 @@ export class Bullets<P> {
         if (y >= t.top && y <= t.bottom && along < hitAt) {
           hit = j;
           hitAt = along;
+          // entra pela borda do corpo do lado de onde a bala vem
+          const ex = Phaser.Math.Clamp(t.x - b.dir * t.halfW, lo, hi);
+          point = { x: ex, y: b.y0 + b.slope * Math.abs(ex - b.x0), dir: b.dir };
         }
       });
       if (hit >= 0) {
         this.list.splice(i, 1);
-        onHit(b.payload, hit);
+        onHit(b.payload, hit, point);
         continue;
       }
       if (b.dist > this.style.maxDist || y2 >= this.groundY) this.list.splice(i, 1);

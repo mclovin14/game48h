@@ -20,6 +20,11 @@ export interface EnemyArchetype {
   mag: number;
   /** Quanto tempo segura a mira antes do tiro: é o aviso para o jogador. */
   aimHoldMs: number;
+  /** Sequência: depois do aviso, dá de [mín, máx] tiros seguidos, um a cada `volleyGapMs` (como o Kael). Sem valor, um tiro. */
+  volley?: [number, number];
+  volleyGapMs?: number;
+  /** Entre as sequências, segura a arma apontada e espera só isto (±20%), sem novo aviso. Sem valor, abaixa a arma. */
+  volleyPauseMs?: number;
   /** Dano de cada bala na vida do Kael e chance de ir no corpo (o resto passa por cima da cabeça). A bala voa: pulo e agachar desviam. */
   damage: number;
   hitChance: number;
@@ -36,6 +41,59 @@ export interface EnemyArchetype {
   jumpKeepPx: number;
   /** Chute do combo: sem valor, nocauteia; com valor, tira essa vida (e nocauteia se zerar). */
   kickDamage?: number;
+  /** IA esperta (policiais): lê o Kael, desvia da bala dele e aproveita as aberturas. Sem valor, a IA simples. */
+  smart?: SmartTraits;
+}
+
+/** Números da IA esperta (plano enemy_ai_difficulty.md). */
+export interface SmartTraits {
+  /** Velocidade da mira e do agachar (2 = metade do tempo). */
+  aimSpeed: number;
+  /** Aviso da mira, sorteado entre [mín, máx] ms (no lugar do `aimHoldMs`). */
+  aimHoldMs: [number, number];
+  /** Espera entre os ciclos, em fração do `fireMs` (mais larga que os ±20% da IA simples). */
+  fireJitter: [number, number];
+  /** Chance de desviar de cada tiro do Kael, tempo de reação e espera até poder desviar de novo. */
+  dodgeChance: number;
+  dodgeReactMs: [number, number];
+  dodgeCooldownMs: number;
+  /** Altura e velocidade (1 = a do pulo normal) do pulo no lugar que deixa a bala baixa passar por baixo. */
+  dodgeJumpH: number;
+  dodgeJumpSpeed: number;
+  /** Kael sem arma a menos disto (vindo para o combo): atira sem o aviso. */
+  closePx: number;
+}
+
+/** Tiro do Kael, avisado aos inimigos: de onde sai, altura acima do chão, para que lado e a que velocidade (px/s). */
+export interface KaelShot {
+  x: number;
+  h: number;
+  dir: 1 | -1;
+  speed: number;
+}
+
+/** Topo do corpo ajoelhado (mesmo valor do BODY_H_CROUCH da cena): bala mais alta que isso passa por cima. */
+const CROUCH_TOP = 86;
+/** Meia largura do corpo para as balas (BODY_HALF_W da cena). */
+const BODY_HALF = 12;
+/** IA esperta: troca de postura depois deste tempo parado (a simples usa `matchCrouchMs`). */
+const SMART_POSTURE_MS = 150; // [TESTE]
+/** Palpite sem histórico: chance de agachar quando o Kael ainda não pulou nem agachou (35%). */
+const LOW_PRIOR = 0.35; // [TESTE]
+/** Folga (px) entre a bala baixa e os pés no pulo de desvio. */
+const DODGE_JUMP_MARGIN = 4;
+
+/** O que o Kael costuma fazer para fugir do tiro: pulos e agachadas recentes (somem aos poucos). Os policiais leem isso. */
+export class KaelHabits {
+  jump = 0;
+  crouch = 0;
+  /** Meia-vida da lembrança, em ms. */
+  constructor(private readonly halfLifeMs = 10000) {}
+  update(delta: number): void {
+    const k = Math.pow(0.5, delta / this.halfLifeMs);
+    this.jump *= k;
+    this.crouch *= k;
+  }
 }
 
 /** Animações e sons de quem atira. Sem `crouchAim`, o agachar já termina mirando; sem `crouchReload`, levanta para recarregar. */
@@ -72,6 +130,12 @@ export interface CopTarget {
   /** Arma apontada (mirando ou atirando) e para que lado. */
   aiming: boolean;
   facing: 1 | -1;
+  /** No ar (pulando), recarregando e com a arma na mão. */
+  airborne: boolean;
+  reloading: boolean;
+  armed: boolean;
+  /** Pulos e agachadas recentes do Kael (KaelHabits). */
+  habit: { jump: number; crouch: number };
 }
 
 /**
@@ -109,13 +173,20 @@ export class Gunner extends Humanoid {
   private fireTimer = 0;
   /** Tiros dados desde a última recarga. */
   private shots = 0;
+  /** Tiros que faltam na sequência e tempo até o próximo. */
+  private volleyLeft = 0;
+  private volleyTimer = 0;
   private reloadSound?: Phaser.Sound.BaseSound;
   private readonly groundY: number;
   /** Tempo parado com a postura diferente da do Kael. */
   private postureTimer = 0;
   /** O que fazer quando terminar de agachar ou levantar. */
   private afterPosture?: () => void;
-  private jump?: { x0: number; x1: number; t: number };
+  private jump?: { x0: number; x1: number; t: number; h: number; speed: number };
+  /** IA esperta: agachar ou não neste ciclo de tiro (o palpite sobre o Kael), quando pode desviar de novo, e Kael perto sem arma. */
+  private plannedLow?: boolean;
+  private dodgeReady = 0;
+  private close = false;
   private enterJumpChecked = false;
   private wasAimedAt = false;
 
@@ -155,8 +226,24 @@ export class Gunner extends Humanoid {
     this.emit(GUNNER_FIRE, this);
   }
 
-  private resetFire(ms = this.archetype.fireMs * Phaser.Math.FloatBetween(0.8, 1.2)): void {
-    this.fireTimer = ms;
+  private resetFire(ms?: number): void {
+    const [lo, hi] = this.archetype?.smart?.fireJitter ?? [0.8, 1.2];
+    this.fireTimer = ms ?? this.archetype.fireMs * Phaser.Math.FloatBetween(lo, hi);
+  }
+
+  /** IA esperta: mira e agachar mais rápidos. O Humanoid chama isto antes do arquétipo existir. */
+  act(anim: AnimName, opts: { reverse?: boolean; restart?: boolean; startFrame?: number } = {}): void {
+    const s = this.archetype?.smart;
+    const fast = s && (anim === this.kit.aim || anim === this.kit.crouchAim || anim === this.kit.crouch);
+    this.anims.timeScale = fast ? s.aimSpeed : 1;
+    super.act(anim, opts);
+  }
+
+  /** Aviso da mira: sorteado na IA esperta, zero com o Kael perto sem arma. */
+  private holdMs(): number {
+    const s = this.archetype.smart;
+    if (!s) return this.archetype.aimHoldMs;
+    return this.close ? 0 : Phaser.Math.Between(...s.aimHoldMs);
   }
 
   /** Sai andando (ou correndo) até `x`, depois fica parado lutando. */
@@ -180,11 +267,18 @@ export class Gunner extends Humanoid {
       case 'aiming':
         // fica no último quadro da mira (arma apontada) durante o aviso
         this.state = 'aimed';
-        this.fireTimer = this.archetype.aimHoldMs;
+        this.fireTimer = this.holdMs();
         break;
-      case 'shooting':
-        this.lower();
+      case 'shooting': {
+        // arma em pé entre as sequências (como o Kael); abaixa para recarregar
+        const pause = this.archetype.volleyPauseMs;
+        if (pause === undefined || this.shots >= this.archetype.mag) return this.lower();
+        this.state = 'aimed';
+        const aim = this.crouched ? this.kit.crouchAim : this.kit.aim;
+        if (aim) this.hold(aim, this.frameCount(aim) - 1);
+        this.fireTimer = pause * Phaser.Math.FloatBetween(0.8, 1.2);
         break;
+      }
       case 'lowering':
         if (this.shots >= this.archetype.mag) return this.reload();
         this.toIdle();
@@ -221,7 +315,11 @@ export class Gunner extends Humanoid {
   private toIdle(refire = true): void {
     this.state = 'idle';
     this.rest();
-    if (refire) this.resetFire();
+    if (refire) {
+      this.resetFire();
+      // novo ciclo: novo palpite sobre o Kael
+      this.plannedLow = undefined;
+    }
   }
 
   /** Agacha (down) ou levanta, e depois `then` (padrão: fica parado). */
@@ -245,7 +343,7 @@ export class Gunner extends Humanoid {
     // agachar já termina mirando: o aviso é a pose parada
     if (this.crouched && !this.kit.crouchAim) {
       this.state = 'aimed';
-      this.fireTimer = this.archetype.aimHoldMs;
+      this.fireTimer = this.holdMs();
       return;
     }
     this.state = 'aiming';
@@ -258,23 +356,25 @@ export class Gunner extends Humanoid {
     this.act(this.crouched ? this.kit.crouchAim! : this.kit.aim, { reverse: true });
   }
 
-  /** Pulo para a frente até `toX`: sai do chão no quadro `air` e volta no `land`, como o Kael. */
-  private startJump(toX: number): void {
+  /** Pulo até `toX` (no lugar, se for o próprio x): sai do chão no quadro `air` e volta no `land`, como o Kael. */
+  private startJump(toX: number, h = this.archetype.jumpHeight, speed = 1): void {
     this.state = 'jumping';
     this.crouched = false;
-    this.jump = { x0: this.x, x1: toX, t: 0 };
-    this.face(toX < this.x ? -1 : 1);
+    this.volleyLeft = 0;
+    this.jump = { x0: this.x, x1: toX, t: 0, h, speed };
+    if (toX !== this.x) this.face(toX < this.x ? -1 : 1);
     this.act(this.kit.jump, { restart: true });
+    this.anims.timeScale = speed;
   }
 
   private updateJump(delta: number): void {
     const j = this.jump!;
-    j.t += delta;
+    j.t += delta * j.speed;
     const t0 = jumpMs(0, JUMP_PHASES.air);
     const t1 = jumpMs(0, JUMP_PHASES.land);
     const k = Phaser.Math.Clamp((j.t - t0) / (t1 - t0), 0, 1);
     this.x = Phaser.Math.Linear(j.x0, j.x1, k);
-    this.y = this.groundY - this.archetype.jumpHeight * Math.sin(Math.PI * k);
+    this.y = this.groundY - j.h * Math.sin(Math.PI * k);
   }
 
   /** Pula na direção do Kael, sem chegar perto demais. */
@@ -325,15 +425,23 @@ export class Gunner extends Humanoid {
     const startedAim = aimedAt && !this.wasAimedAt;
     this.wasAimedAt = aimedAt;
     if (startedAim && this.state === 'idle' && !this.crouched && Math.random() < this.archetype.jumpWhenAimed && this.jumpToward(targetX)) return;
-    // parado com a postura diferente da do Kael: agacha ou levanta depois de um instante
-    if (this.state === 'idle' && canShoot && this.archetype.matchCrouchMs > 0 && target.crouched !== this.crouched) {
+    const smart = this.archetype.smart;
+    this.close = !!smart && canShoot && !target.armed && Math.abs(targetX - this.x) < smart.closePx;
+    // parado com a postura errada para acertar o Kael: agacha ou levanta depois de um instante
+    const low = canShoot ? this.wantLow(target) : this.crouched;
+    if (this.state === 'idle' && this.archetype.matchCrouchMs > 0 && low !== this.crouched) {
       this.postureTimer += delta;
-      if (this.postureTimer >= this.archetype.matchCrouchMs) {
+      if (this.postureTimer >= (smart ? SMART_POSTURE_MS : this.archetype.matchCrouchMs)) {
         this.postureTimer = 0;
-        return this.setPosture(target.crouched);
+        return this.setPosture(low);
       }
     } else this.postureTimer = 0;
+    // aberturas do Kael: recarregando ou chegando sem arma, o tiro vem logo
+    const opening = !!smart && (target.reloading || this.close);
+    // atirando baixo, espera o Kael pousar (no ar a bala baixa passa por baixo dele)
+    const waitLanding = !!smart && this.crouched && target.airborne;
     if (this.state === 'idle' && inRange) {
+      if (opening) this.fireTimer = Math.min(this.fireTimer, 120);
       this.fireTimer -= delta;
       if (this.fireTimer > 0) return;
       // vez de outro: tenta de novo daqui a pouco
@@ -342,14 +450,84 @@ export class Gunner extends Humanoid {
     } else if (this.state === 'aimed') {
       // Kael morreu ou saiu do alcance durante o aviso: abaixa sem atirar
       if (!inRange) return this.lower();
+      // o tiro em pé passa por cima do Kael agachado: abaixa a arma para agachar (regra do idle)
+      if (smart ? target.crouched && !this.crouched : this.archetype.matchCrouchMs > 0 && target.crouched !== this.crouched) return this.lower();
+      if (waitLanding) return;
+      if (opening) this.fireTimer = Math.min(this.fireTimer, 60);
       this.fireTimer -= delta;
       if (this.fireTimer <= 0) {
-        this.state = 'shooting';
-        this.act(this.crouched ? this.kit.crouchShoot : this.kit.shoot, { restart: true });
-        this.shots++;
-        if (!this.kit.burst) this.fire();
+        const [lo, hi] = this.archetype.volley ?? [1, 1];
+        this.volleyLeft = Phaser.Math.Between(lo, hi);
+        this.shoot();
       }
+    } else if (this.state === 'shooting' && this.volleyLeft > 0) {
+      // sequência: o próximo tiro recomeça o recuo, se o Kael continua em alcance e ainda tem bala no pente
+      if (waitLanding) return;
+      this.volleyTimer -= delta;
+      if (this.volleyTimer > 0) return;
+      if (!inRange || this.shots >= this.archetype.mag) this.volleyLeft = 0;
+      else this.shoot();
     }
+  }
+
+  /** Agachar para atirar baixo? A IA simples copia o Kael. A esperta adivinha: o tiro baixo pega o Kael em pé e agachado,
+   *  mas o pulo desvia dele; então agacha conforme o Kael costuma agachar ou pular (um palpite por ciclo). */
+  private wantLow(target: CopTarget): boolean {
+    if (!this.archetype.smart || target.crouched) return target.crouched;
+    if (this.plannedLow === undefined) {
+      const { jump, crouch } = target.habit;
+      this.plannedLow = Math.random() < (crouch + LOW_PRIOR) / (jump + crouch + 1);
+    }
+    return this.plannedLow;
+  }
+
+  /** O Kael atirou: se a bala vem nele, às vezes desvia, no tempo certo. Da bala alta agacha (ela passa por cima);
+   *  da baixa pula no lugar, com o alto do pulo na hora em que ela chega. De perto não dá tempo. */
+  dodge(shot: KaelShot): void {
+    const s = this.archetype.smart;
+    const free = () => ['idle', 'aiming', 'aimed', 'shooting', 'lowering'].includes(this.state);
+    if (!s || !free() || this.scene.time.now < this.dodgeReady) return;
+    const gap = (this.x - shot.x) * shot.dir - BODY_HALF;
+    if (gap <= 0) return;
+    const high = shot.h > CROUCH_TOP;
+    if (high && this.crouched) return;
+    if (Math.random() >= s.dodgeChance) return;
+    const arrive = (gap / shot.speed) * 1000;
+    const react = Phaser.Math.Between(...s.dodgeReactMs);
+    let delay = react;
+    if (!high) {
+      // no ar, os pés ficam acima da bala entre `early` e `late` depois do começo do pulo
+      const lift = shot.h + DODGE_JUMP_MARGIN;
+      if (lift >= s.dodgeJumpH) return;
+      const t0 = jumpMs(0, JUMP_PHASES.air) / s.dodgeJumpSpeed;
+      const t1 = jumpMs(0, JUMP_PHASES.land) / s.dodgeJumpSpeed;
+      const k0 = Math.asin(lift / s.dodgeJumpH) / Math.PI;
+      const early = t0 + k0 * (t1 - t0);
+      delay = Math.max(react, arrive - (t0 + t1) / 2);
+      if (arrive - delay < early) return;
+    } else if (react >= arrive) return;
+    this.dodgeReady = this.scene.time.now + s.dodgeCooldownMs;
+    this.scene.time.delayedCall(delay, () => {
+      if (!this.active || !free()) return;
+      this.volleyLeft = 0;
+      if (!high) return this.startJump(this.x, s.dodgeJumpH, s.dodgeJumpSpeed);
+      // agachado já fica com o tiro baixo pronto: responde logo
+      this.plannedLow = true;
+      this.setPosture(true, () => {
+        this.toIdle(false);
+        this.fireTimer = Math.min(this.fireTimer, 250);
+      });
+    });
+  }
+
+  /** Um tiro (ou uma rajada): toca o recuo do começo. */
+  private shoot(): void {
+    this.state = 'shooting';
+    this.volleyLeft--;
+    this.volleyTimer = this.archetype.volleyGapMs ?? 0;
+    this.act(this.crouched ? this.kit.crouchShoot : this.kit.shoot, { restart: true });
+    this.shots++;
+    if (!this.kit.burst) this.fire();
   }
 
   /** Leva um tiro. Devolve o que aconteceu (ou null se já estava no chão). */
@@ -376,6 +554,7 @@ export class Gunner extends Humanoid {
     // apanhou no meio da recarga: o som para e a recarga recomeça depois do tranco
     this.reloadSound?.stop();
     this.reloadSound = undefined;
+    this.volleyLeft = 0;
     // o tranco e a queda são em pé; no ar, cai direto no chão
     this.crouched = false;
     this.afterPosture = undefined;

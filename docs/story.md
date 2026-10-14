@@ -41,6 +41,14 @@ Por trás disso, e sem o jogador saber ainda: foi o Geraldo quem contratou os me
 
 **Cutscene.** Uma imagem estática com texto, no início. A posição dela em relação ao chefe ainda está em aberto.
 
+### Nesta versão (quadra 1 de exemplo, 13/10/2026)
+
+O jogo completo segue o roteiro acima. A versão jogável hoje é só a quadra 1, contada assim:
+1. **Abertura:** a mensagem da seção 5, numa tela preta, letra por letra. A câmera vai até o fim da rua: a Adriana está presa por três mercenários do Geraldo, ao lado de uma van. Ela grita "KAEL! Socorro!" e "Eles vão me levar! Me ajuda!", sem revelar quem é o mandante. O Kael responde "Aguenta firme. Eu tô indo." O Geraldo não aparece.
+2. **Barricadas:** duas, com policiais em ondas, do entardecer à noite. Às vezes chove no fim.
+3. **Chefes:** os três mercenários, de fuzil, que cercam o Kael de uma vez. Matar mercenário não tira índole. O Roberto fica para o jogo completo.
+4. **Finais pela índole:** com 50% ou mais, o Kael salva a Adriana, ela corre e o abraça, e a ilustração mostra o beijo na rua à noite. Abaixo de 50%, depois que os três caem, um mercenário caído dá um último tiro; o Kael cai, a Adriana corre até ele, e a ilustração mostra ela ajoelhada com o Kael no colo, na chuva. Depois, "FIM".
+
 ---
 
 ## 4. O que o texto conta e o que o jogo mostra
@@ -74,13 +82,15 @@ O texto já explica por que as barricadas existem: o Geraldo tirou o Kael do cas
 
 ---
 
-## 5. Mensagem de abertura (rascunho, não aprovado)
+## 5. Mensagem de abertura (aprovada em 13/10/2026)
 
 > A Adriana foi sequestrada por mercenários.
 > O delegado Geraldo me tirou do caso.
 > Vou mesmo assim.
-> Ela está num prédio na Capital. São cinco quadras de barricadas até lá.
+> Levaram ela para o fim desta rua. Tem barricada da polícia o caminho todo.
 > Tenho uma pistola. E um distintivo que aqui não vale nada.
+
+13/10/2026: a 4ª linha antiga ("Ela está num prédio na Capital. São cinco quadras de barricadas até lá.") saiu porque o escopo desta versão é só a quadra 1 (`decisions.md`).
 
 Escrita em primeira pessoa, por ser mais curta e direta, combinando com o tom de ação. Pode trocar para terceira pessoa.
 
@@ -88,7 +98,7 @@ Escrita em primeira pessoa, por ser mais curta e direta, combinando com o tom de
 
 ## 6. Em aberto (deste arquivo)
 
-1. Aprovar ou ajustar a divisão entre texto e jogo, e o rascunho da mensagem.
+1. ~~Aprovar ou ajustar a divisão entre texto e jogo, e o rascunho da mensagem.~~ A mensagem foi aprovada em 13/10/2026 (plano `playtest_fixes_1.md`, fase 1).
 2. **Roberto reconhecendo o Kael:** como aparece sem texto? Uma opção é só uma animação dele parando e apontando antes da luta. A outra é uma fala curta, mas isso seria um segundo texto na quadra 1.
 3. **Ordem do fim da quadra 1:** a cutscene vem antes do Roberto ou depois da luta?
 4. **Texto da cutscene do fim da quadra 1:** o que a imagem mostra e o que o texto diz.

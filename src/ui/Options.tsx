@@ -2,14 +2,16 @@ import { useState } from 'react';
 import { LANGS, LANG_NAME, getLang, setLang, t, type TextKey } from '../i18n';
 import { VOLUME_STEPS, loadVolumes, saveVolumes, useFullscreen, useLang, type Volumes } from './settings';
 import { useMenuKeys } from './useMenuKeys';
+import { Controls } from './Controls';
 
-type Row = 'music' | 'sfx' | 'fullscreen' | 'language' | 'back';
-const ROWS: Row[] = ['music', 'sfx', 'fullscreen', 'language', 'back'];
+type Row = 'music' | 'sfx' | 'fullscreen' | 'language' | 'controls' | 'back';
+const ROWS: Row[] = ['music', 'sfx', 'fullscreen', 'language', 'controls', 'back'];
 const LABEL: Record<Row, TextKey> = {
   music: 'options.music',
   sfx: 'options.sfx',
   fullscreen: 'options.fullscreen',
   language: 'options.language',
+  controls: 'options.controls',
   back: 'menu.back',
 };
 
@@ -31,8 +33,31 @@ function VolumeBar({ value, onSet }: { value: number; onSet: (v: number) => void
   );
 }
 
-/** Opções: volume da música e dos efeitos, tela cheia e língua. Tudo fica guardado no navegador. */
+/** Opções: volume da música e dos efeitos, tela cheia, língua e a lista de controles. Tudo fica guardado no navegador. */
 export function Options({ onBack }: { onBack: () => void }) {
+  const [controls, setControls] = useState(false);
+  const [came, setCame] = useState(false);
+  // a lista sai da tela enquanto os controles estão abertos: só uma escuta de teclado por vez
+  if (controls)
+    return (
+      <Controls
+        onBack={() => {
+          setControls(false);
+          setCame(true);
+        }}
+      />
+    );
+  // voltando dos controles, a seleção fica neles
+  return <OptionsList onBack={onBack} onControls={() => setControls(true)} initial={came ? ROWS.indexOf('controls') : 0} />;
+}
+
+interface ListProps {
+  onBack: () => void;
+  onControls: () => void;
+  initial: number;
+}
+
+function OptionsList({ onBack, onControls, initial }: ListProps) {
   const lang = useLang();
   const [vol, setVol] = useState<Volumes>(loadVolumes);
   const [full, toggleFull] = useFullscreen();
@@ -53,10 +78,11 @@ export function Options({ onBack }: { onBack: () => void }) {
   const select = (i: number) => {
     const row = ROWS[i];
     if (row === 'back') onBack();
+    else if (row === 'controls') onControls();
     else if (row === 'fullscreen') toggleFull();
     else if (row === 'language') cycleLang(1);
   };
-  const [sel, setSel] = useMenuKeys({ count: ROWS.length, onSelect: select, onBack, onAdjust: adjust });
+  const [sel, setSel] = useMenuKeys({ count: ROWS.length, onSelect: select, onBack, onAdjust: adjust, initial });
 
   const value = (row: Row) => {
     if (row === 'music' || row === 'sfx') return <VolumeBar value={vol[row]} onSet={(v) => setVolume(row, v)} />;

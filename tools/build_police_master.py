@@ -5,6 +5,8 @@ Saída: assets/enemies/police/master/<anim>_east/ + sheets e GIFs de prévia.
 """
 import os
 import sys
+
+from scipy import ndimage
 sys.path.insert(0, os.path.dirname(__file__))
 from sprite_lib import (load, load_frames, load_palette, remap, drop_islands, ground, copy_blood,
                         cm, save_anim, report, RED, DRED, np)
@@ -164,6 +166,20 @@ def main():
         ko.append(a)
     shift = DEATH_FLOOR - int(np.where(ko[-1][:, :, 3] > 0)[0].max())
     ko = [ground(a, GUN_FLOOR) if i < 3 else np.roll(a, shift, axis=0) for i, a in enumerate(ko)]
+    # deitado (6 e 7): a pistola solta tocava o chão e o corpo ficava acima; desce o corpo e põe a pistola na frente
+    last = ko[-1]
+    lab, k = ndimage.label(last[:, :, 3] > 0, structure=np.ones((3, 3)))
+    sizes = ndimage.sum(np.ones_like(lab), lab, range(1, k + 1))
+    gun = lab == 1 + int(np.argsort(sizes)[-2])
+    dy = DEATH_FLOOR - int(np.nonzero((last[:, :, 3] > 0) & ~gun)[0].max())
+    for i in (6, 7):
+        a = np.zeros_like(ko[i])
+        a[dy:] = ko[i][:-dy]
+        a[DEATH_FLOOR + 1:] = 0
+        a[gun] = last[gun]
+        drop_islands(a, 30)  # restos da pistola antiga
+        ko[i] = a
+    print(f'knockout: corpo desce {dy} px')
     emit('knockout_east', ko, KO_DUR)
     report('knockout_east', ko[-1:], DEATH_FLOOR, allowed)
 

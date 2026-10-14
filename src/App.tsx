@@ -5,6 +5,8 @@ import { Hud } from './ui/Hud';
 import { TitleMenu, PauseMenu } from './ui/Menu';
 import { Dialog } from './ui/Dialog';
 import { Cutscene } from './ui/Cutscene';
+import { Toast } from './ui/Toast';
+import { GameOver } from './ui/GameOver';
 import { emitVolumes, loadVolumes } from './ui/settings';
 
 type Screen = 'title' | 'playing';
@@ -54,6 +56,8 @@ export function App() {
           <PhaserGame />
           {!paused && !cutscene && <Hud />}
           <Cutscene onActive={setCutscene} />
+          <Toast />
+          <GameOver paused={paused} />
         </>
       )}
       {screen === 'title' && <TitleMenu onPlay={() => setScreen('playing')} />}

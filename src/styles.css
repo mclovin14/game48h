@@ -36,11 +36,13 @@ body,
   image-rendering: pixelated;
 }
 
-/* HUD não captura o mouse: os cliques vão para o jogo */
+/* HUD não captura o mouse: os cliques vão para o jogo. --px = 1 pixel da arte da HUD (Hud.tsx) */
 .hud {
+  --px: 2px;
   position: absolute;
   top: 12px;
   left: 12px;
+  right: 12px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -48,49 +50,239 @@ body,
   font-size: 13px;
 }
 
-.meter {
+.hud img,
+.hud .bar,
+.hud .scale {
+  image-rendering: pixelated;
+}
+
+/* vida e índole: retrato à esquerda, nome e barras à direita (medidas em pixels da arte) */
+.vitals {
+  display: flex;
+  align-items: flex-start;
+  gap: calc(var(--px) * 2);
+}
+
+.portrait {
+  width: calc(var(--px) * 53);
+  height: calc(var(--px) * 53);
+}
+
+.vitals-bars {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--px) * 1);
+  padding-top: calc(var(--px) * 2);
+}
+
+.vitals .name {
+  font-family: 'Pixelify Sans', monospace;
+  font-weight: 700;
+  font-size: calc(var(--px) * 12);
+  line-height: 1;
+  color: #e0403a;
+  letter-spacing: var(--px);
+  text-shadow:
+    var(--px) 0 #1a0d10,
+    calc(var(--px) * -1) 0 #1a0d10,
+    0 var(--px) #1a0d10,
+    0 calc(var(--px) * -1) #1a0d10,
+    var(--px) var(--px) #1a0d10;
+}
+
+/* moldura 144x16; miolo transparente em x 5-138, y 4-11 */
+.bar {
+  position: relative;
+  width: calc(var(--px) * 144);
+  height: calc(var(--px) * 16);
+}
+
+/* a moldura fica por cima do preenchimento */
+.bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('/ui/hud/hud_bar_frame.png') 0 0 / 100% 100% no-repeat;
+}
+
+.bar-slot {
+  position: absolute;
+  left: calc(var(--px) * 5);
+  top: calc(var(--px) * 4);
+  width: calc(var(--px) * 134);
+  height: calc(var(--px) * 8);
+  background: #12141b;
+}
+
+.bar-fill,
+.bar-trail {
+  position: absolute;
+  inset: 0 auto 0 0;
+}
+
+.bar-fill {
+  transition: width 120ms steps(4), background 300ms;
+}
+
+/* a parte perdida fica branca e depois escorre */
+.bar-trail {
+  background: #f4f1e8;
+  transition: width 450ms ease-in;
+}
+
+/* balança 24 + barra 120 = 144: alinha com a barra de vida */
+.morale {
   display: flex;
   align-items: center;
-  gap: 8px;
 }
 
-.meter span {
-  width: 56px;
+.morale .bar {
+  width: calc(var(--px) * 120);
 }
 
-.meter-track {
-  width: 180px;
-  height: 10px;
-  background: #2a2f3b;
-  border: 1px solid #4a5163;
+.morale .bar::after {
+  background-image: url('/ui/hud/hud_bar_frame_short.png');
 }
 
-.meter-fill {
-  height: 100%;
-  transition: width 150ms;
+.morale .bar-slot {
+  width: calc(var(--px) * 110);
+}
+
+/* balança: sheet de 2 quadros 24x24, o 2º é ela pendendo */
+.scale {
+  width: calc(var(--px) * 24);
+  height: calc(var(--px) * 24);
+  background: url('/ui/hud/hud_scale_sheet.png') 0 0 / 200% 100% no-repeat;
+}
+
+.scale.tilt {
+  background-position: 100% 0;
+}
+
+/* arma e munição: canto de cima, à direita */
+.arms {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: flex-start;
+  gap: calc(var(--px) * 3);
+}
+
+.loadout {
+  display: flex;
+  gap: calc(var(--px) * 2);
+}
+
+/* espaço da arma: moldura 47x42 com o ícone já dentro (build_hud.py) */
+.slot {
+  width: calc(var(--px) * 47);
+  height: calc(var(--px) * 42);
+  image-rendering: pixelated;
+  background: url('/ui/hud/hud_slot_fist.png') 0 0 / 100% 100% no-repeat;
+}
+
+.slot.pistol {
+  background-image: url('/ui/hud/hud_slot_pistol.png');
+}
+
+.loadout.both .slot.on {
+  animation: slot-pop 180ms steps(3);
+}
+
+.slot.off {
+  opacity: 0.4;
+  filter: grayscale(1);
+}
+
+@keyframes slot-pop {
+  from {
+    transform: scale(0.8);
+  }
 }
 
 .ammo {
   display: flex;
-  gap: 12px;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: calc(var(--px) * 2);
+  padding-top: calc(var(--px) * 2);
 }
 
-.ammo .weapon {
-  color: #9aa3b5;
+/* balas no pente: sheet 4 quadros 5x10 (letal, não letal, vazia, cinza) */
+.mag-row {
+  display: flex;
+  gap: var(--px);
 }
 
-.ammo .mag {
-  font-weight: bold;
+.bullet {
+  width: calc(var(--px) * 5);
+  height: calc(var(--px) * 10);
+  image-rendering: pixelated;
+  background: url('/ui/hud/hud_bullet_sheet.png') 0 0 / 400% 100% no-repeat;
+  background-position-x: calc(100% * 2 / 3);
 }
 
-.ammo .mag.empty {
-  color: #e05a4f;
+.mag-row.lethal .bullet.full {
+  background-position-x: 0;
 }
 
-.ammo .sel {
-  color: #0d0f14;
-  background: #e6e9f0;
-  padding: 0 4px;
+.mag-row.nonLethal .bullet.full {
+  background-position-x: calc(100% / 3);
+}
+
+.mag-row.empty .bullet {
+  background-position-x: 100%;
+  animation: blink 500ms steps(1) infinite;
+}
+
+.mag-row.flash {
+  animation: blink 150ms steps(1) 3;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+/* reserva: ícone do pente vermelho ou azul com o número */
+.reserve {
+  display: flex;
+  gap: calc(var(--px) * 4);
+  font-family: 'Pixelify Sans', monospace;
+  font-weight: 700;
+  font-size: calc(var(--px) * 9);
+  line-height: 1;
+  color: #e6e9f0;
+  text-shadow:
+    var(--px) 0 #12141b,
+    calc(var(--px) * -1) 0 #12141b,
+    0 var(--px) #12141b,
+    0 calc(var(--px) * -1) #12141b;
+}
+
+.clip {
+  display: flex;
+  align-items: center;
+  gap: var(--px);
+  opacity: 0.5;
+}
+
+.clip.sel {
+  opacity: 1;
+}
+
+.clip-icon {
+  width: calc(var(--px) * 10);
+  height: calc(var(--px) * 17);
+  image-rendering: pixelated;
+  background: url('/ui/hud/hud_clip_sheet.png') 0 0 / 200% 100% no-repeat;
+}
+
+.clip.nonLethal .clip-icon {
+  background-position-x: 100%;
 }
 
 .overlay {
@@ -434,4 +626,222 @@ body,
   bottom: calc(6% - 0.5em);
   color: #9aa3b5;
   font-size: 13px;
+}
+
+/* ---------- Controles (Opções → Controles): a lista ocupa o lugar do logo ---------- */
+
+.menu-column:has(.controls) .logo,
+.menu-column:has(.controls) > .menu-heading,
+.menu-screen:has(.controls) .menu-hint {
+  display: none;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  color: var(--menu-text);
+}
+
+.controls .menu-heading {
+  margin: 0;
+}
+
+.ctl-cols {
+  display: flex;
+  gap: 56px;
+  margin: 18px 0 14px;
+}
+
+.ctl-grid {
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-auto-rows: min-content;
+  align-content: start;
+  column-gap: 24px;
+  margin: 0;
+  font-size: 19px;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.45);
+}
+
+.ctl-grid dt,
+.ctl-grid dd {
+  margin: 0;
+  padding: 3px 0;
+  white-space: nowrap;
+}
+
+.ctl-grid dt {
+  color: var(--menu-text);
+}
+
+.ctl-grid dd {
+  color: var(--menu-dim);
+}
+
+/* título do grupo: ocupa a linha toda */
+.ctl-grid .ctl-head {
+  grid-column: 1 / -1;
+  padding: 14px 0 4px;
+  font-size: 16px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--menu-sel);
+}
+
+.ctl-grid .ctl-head:first-child {
+  padding-top: 0;
+}
+
+/* tela baixa (960x540): a lista encolhe para caber */
+@media (max-height: 640px), (max-width: 1100px) {
+  .ctl-cols {
+    gap: 36px;
+    margin: 10px 0 8px;
+  }
+  .ctl-grid {
+    font-size: 16px;
+  }
+  .ctl-grid dt,
+  .ctl-grid dd {
+    padding: 1px 0;
+  }
+  .ctl-grid .ctl-head {
+    padding: 8px 0 3px;
+    font-size: 14px;
+  }
+  .controls .menu-item {
+    font-size: 22px;
+  }
+}
+
+.controls .menu-item {
+  font-size: 26px;
+}
+
+.ctl-hint {
+  margin: 10px 0 0;
+  font-size: 16px;
+  color: var(--menu-dim);
+}
+
+/* dica curta no começo da fase: entra, fica e some sozinha */
+.toast {
+  position: absolute;
+  left: 50%;
+  top: 84px;
+  padding: 8px 18px;
+  font-family: 'Pixelify Sans', ui-monospace, monospace;
+  font-size: 18px;
+  color: #eadfce;
+  background: rgba(16, 12, 24, 0.82);
+  border: 2px solid #4a5163;
+  pointer-events: none;
+  white-space: nowrap;
+  animation: toast var(--toast-ms) ease-in-out forwards;
+}
+
+@keyframes toast {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -8px);
+  }
+  10%,
+  85% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -8px);
+  }
+}
+
+/* game over: a tela escurece em 1,8 s; título, "Você perdeu" e a frase entram em sequência; o "Enter" pisca quando aceita */
+.gameover {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 0 10%;
+  text-align: center;
+  background: radial-gradient(ellipse at center, rgba(30, 4, 8, 0.82) 0%, rgba(0, 0, 0, 0.94) 75%);
+  opacity: 0;
+  transition: opacity 1800ms ease-in;
+  pointer-events: none;
+}
+
+.gameover.on {
+  opacity: 1;
+}
+
+.gameover h1,
+.gameover h2,
+.gameover p {
+  margin: 0;
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 900ms ease-out,
+    transform 900ms ease-out;
+}
+
+.gameover.on h1,
+.gameover.on h2,
+.gameover.on p {
+  opacity: 1;
+  transform: none;
+}
+
+.gameover h1 {
+  font-family: 'Pixelify Sans', monospace;
+  font-weight: 700;
+  font-size: 72px;
+  line-height: 1;
+  letter-spacing: 4px;
+  color: #d83a3a;
+  text-shadow:
+    4px 0 #1a0d10,
+    -4px 0 #1a0d10,
+    0 4px #1a0d10,
+    0 -4px #1a0d10,
+    4px 4px #1a0d10,
+    6px 6px #000;
+  transition-delay: 600ms;
+}
+
+.gameover h2 {
+  font-family: 'Pixelify Sans', monospace;
+  font-weight: 700;
+  font-size: 28px;
+  color: #f4ebe8;
+  text-shadow: 2px 2px #000;
+  transition-delay: 1300ms;
+}
+
+.gameover p {
+  max-width: 620px;
+  margin-top: 12px;
+  font-size: 18px;
+  line-height: 1.6;
+  font-style: italic;
+  color: #b9b0b4;
+  transition-delay: 1900ms;
+}
+
+.gameover small {
+  margin-top: 28px;
+  font-family: 'Pixelify Sans', monospace;
+  font-size: 18px;
+  color: #ffd84a;
+  text-shadow: 2px 2px #000;
+  opacity: 0;
+}
+
+.gameover small.on {
+  animation: blink 1000ms steps(1) infinite;
+  opacity: 1;
 }

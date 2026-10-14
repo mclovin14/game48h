@@ -16,6 +16,8 @@ export const VOLUME = {
   punchHit: 0.6,
   kickHit: 0.7,
   swing: 0.35,
+  // a chuva cheia fica ~6 dB abaixo da música (com 0,5 ficava ~4 dB acima)
+  rain: 0.15,
 };
 const MUSIC_FADE_MS = 2500;
 
@@ -41,12 +43,15 @@ const FILES = {
   // AK-47 da Free Firearm Sound Library (CC0), um tiro: a rajada toca três
   rifle_shot: 'sounds/rifle_shot.wav',
   colt_reload: 'sounds/colt_reload.wav',
+  colt_reload_fast: 'sounds/colt_reload_fast.wav',
   dry_fire: 'sounds/dry_fire.wav',
   // combo do Kael (CC0, OpenGameArt): soco de qubodup, chute do pacote Independent.nu, golpe no ar de artisticdude
   punch_hit: 'sounds/punch_hit.wav',
   kick_hit: 'sounds/kick_hit.wav',
   swing: 'sounds/swing.wav',
   ost_level_1: 'sounds/ost_level_1.mp3',
+  // chuva: "Rain (loopable)" de Ylmir (CC0, OpenGameArt), faixa 1; o MP3 é para navegador sem OGG
+  rain_loop: ['sounds/rain_loop.ogg', 'sounds/rain_loop.mp3'],
 };
 export type SoundKey = keyof typeof FILES;
 
@@ -106,6 +111,18 @@ export function startMusic(scene: Phaser.Scene, key: SoundKey): void {
   music!.play();
   // `from` explícito: o volume lido do Web Audio ainda vale 1 logo depois do play
   scene.tweens.add({ targets: music, volume: { from: 0, to: VOLUME.music * mix.music }, duration: MUSIC_FADE_MS });
+}
+
+/** Som de fundo em loop (chuva), começando mudo: o volume vem de `setLoopVolume`. */
+export function startLoop(scene: Phaser.Scene, key: SoundKey): Phaser.Sound.BaseSound {
+  const sound = scene.sound.add(key, { loop: true, volume: 0 });
+  sound.play();
+  return sound;
+}
+
+/** Volume do loop (0 a 1 do `base`), já com o volume dos efeitos das opções. */
+export function setLoopVolume(sound: Phaser.Sound.BaseSound, base: number): void {
+  (sound as Phaser.Sound.WebAudioSound).setVolume(base * mix.sfx);
 }
 
 /** Leva a música a `factor` do volume normal em `ms` (0 = silêncio). A próxima startMusic volta ao volume cheio. */

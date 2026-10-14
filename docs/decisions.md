@@ -1,6 +1,6 @@
 # Kael: decisões do jogo
 
-Status: rascunho v0.1 (sessão de 11/10/2026)
+Status: rascunho v0.1 (sessão de 11/10/2026), atualizado em 14/10/2026. O jogo está na **versão 0.1** (tag `v0.1` no git, 14/10/2026).
 Regra: cada item marcado como DECIDIDO, EM ABERTO ou AJUSTAR EM TESTE. Nada entra em "decidido" sem registro da data e da fonte.
 
 ---
@@ -20,7 +20,7 @@ Regra: cada item marcado como DECIDIDO, EM ABERTO ou AJUSTAR EM TESTE. Nada entr
 - **Gênero:** Metroidvania de ação, vista lateral, roda no navegador.
 - **Tom:** ação pura.
 - **Arte:** pixel art. Sprites principais com PixelLab. Arte de apoio com Gemini ou GPT, sempre pixelizada depois.
-- **Estrutura:** cinco quadras até o prédio na Capital. Cada quadra tem barricadas de policiais, mais fortes que as anteriores.
+- **Estrutura:** cinco quadras até o prédio na Capital. Cada quadra tem barricadas de policiais, mais fortes que as anteriores. *(Jogo completo. O escopo desta versão é só a fase atual, ver **Escopo** abaixo; a abertura não cita mais a Capital nem as cinco quadras, 13/10/2026.)*
 - **Quadra 1 em duas partes:**
   - **Parte 1, tutorial.** O jogador aprende os controles.
   - **Parte 2, barricada.** Vários policiais, que chegam um de cada vez, no estilo Metal Slug. O jogador escolhe neutralizar cada um de forma letal ou não letal.
@@ -93,6 +93,7 @@ Regra: cada item marcado como DECIDIDO, EM ABERTO ou AJUSTAR EM TESTE. Nada entr
 - Plano em `plan/sound_run_reload_menu.md`.
 - **Pente e tipos de bala:** o pente carrega o tipo selecionado. Trocar de tipo devolve as balas do pente para a reserva e recarrega com o outro tipo.
 - **Tecla R:** só recarrega (não reinicia mais a cena). Reiniciar fica no menu de pausa. Depois da morte, **Enter** reinicia (proposta da IA aprovada pelo usuário em 12/10/2026; o que acontece na derrota segue em aberto, item 14).
+- **Tela de game over** (14/10/2026, pedido do usuário): quando o Kael cai, a tela escurece devagar e aparecem "GAME OVER", "Você perdeu" e uma frase triste sorteada (Adriana esperando, Kael caído). O "Pressione Enter para tentar de novo" pisca quando o Enter passa a valer (~3,6 s depois da queda) [TESTE]. Vale para a cena de teste; o que a derrota faz no jogo completo segue no item 14. Frases escritas pela IA, o usuário pode trocar (`src/i18n/`).
 - **Correr:** segurar Shift. O Kael **para** para atirar e para recarregar. Atirar correndo e recarregar andando ficam de fora por enquanto.
 - **Menu em português**, com internacionalização (português e inglês).
 - **OST** só quando a fase abre; o menu fica sem música.
@@ -115,6 +116,7 @@ Regra: cada item marcado como DECIDIDO, EM ABERTO ou AJUSTAR EM TESTE. Nada entr
 - **Resolução de referência:** 960x540, escalada para caber na janela sem borrar o pixel.
 - **Tela sem faixa preta (11/10/2026, usuário):** a altura do jogo é fixa em 540 (é ela que dá a proporção do Kael, das portas e dos prédios); a largura visível acompanha a janela, de 960 (16:9) a 1280 (21:9), sempre na mesma escala nos dois eixos. Em tela 16:9 fica exatamente 960x540; janela mais larga mostra mais rua dos lados, nunca estica. Fora dessa faixa (janela em pé ou mais larga que 21:9) volta a sobrar borda.
 - **Controles (11/10/2026, usuário):** botão esquerdo do mouse atira, botão direito mira, tecla 1 saca ou guarda a arma (o Kael começa sem arma). Andar com A/D ou setas é provisório.
+- **Lista de controles nas Opções (13/10/2026, usuário):** sem caixa de controles ao começar a fase. As teclas ficam em **Opções → Controles** (no título e na pausa), numa lista tecla | ação em grupos: Movimento, Combate, Jogo e **Teste** (F1, K, C, [ ], N). No começo da fase, uma dica curta que aparece e some: "Controles: Esc → Opções → Controles", uma vez por sessão.
 
 ---
 
@@ -169,10 +171,16 @@ Números e curvas que só fazem sentido jogando. Não decidir antes de testar.
 - Quantidade de balas por loot e munição inicial do Kael.
 - Vida e dano do Roberto na luta de chefe.
 - **Combate do policial (12/10/2026, provisório):** atira a cada 1,8 s (±20%), alcance 600 px; segura a mira 0,45 s antes do tiro; acerta 70% das vezes, com dano 8 (vida do Kael 100). Kael atingido pisca em vermelho por 0,22 s. Loot do nocaute: 3 balas por caixa (70% letal / 30% não letal), pega a 28 px. Valores no arquétipo `patrol` (`src/game/actors/Police.ts`), no topo de `Loot.ts` e de `Test.ts`.
-- **Tiro e pente (12/10/2026, provisórios):** pente de 8; começo com 8 letais no pente e reserva letal 4, não letal 6; intervalo mínimo entre tiros 270 ms (o recuo); abaixa a arma depois de 1,2 s sem tiro nem botão direito; recarga de 2,08 s (o som `colt_reload`), parado; volume da recarga 0,55 e do clique seco 0,5. No topo de `src/game/scenes/Test.ts` e de `Sfx.ts`.
+- **Tiro contínuo do policial (13/10/2026, usuário, provisório):** em vez de um tiro por vez, dá uma sequência de 2 a 3 tiros (300 ms entre eles); entre as sequências segura a arma apontada e espera 0,8 s (±20%), sem novo aviso; abaixa para recarregar, quando o Kael sai do alcance ou muda de postura. A espera com a arma abaixada caiu de 1,8 s para 1,3 s. Plano `docs/plan/enemy_ai_difficulty.md`, fase 1.
+- **Policial esperto (13/10/2026, usuário, provisório):** mira 2x mais rápida, aviso sorteado de 150 a 380 ms, sequência de 1 a 4 tiros, espera de 0,8 s variando de 40% a 160%. Lê os pulos e as agachadas recentes do Kael e escolhe atirar alto ou baixo; desvia da bala do Kael (45%: agacha da alta, pula da baixa, de perto não dá tempo); atira logo quando o Kael recarrega ou chega sem arma. Valores em `smart` do arquétipo `patrol` (`Police.ts`) e no topo de `Gunner.ts`. Os mercenários continuam com a IA simples.
+- **Tiro e pente (12/10/2026, provisórios):** pente de 8; começo com 8 letais no pente e reserva letal 4, não letal 6; intervalo mínimo entre tiros 270 ms (o recuo); abaixa a arma depois de 1,2 s sem tiro nem botão direito; recarga de 2,08 s (o som `colt_reload`), parado (**13/10/2026: 1,21 s, o som `colt_reload_fast`**, plano `playtest_fixes_1.md` fase 6); volume da recarga 0,55 e do clique seco 0,5. No topo de `src/game/scenes/Test.ts` e de `Sfx.ts`.
 - **Sons (12/10/2026, provisórios):** volumes da música 0,15 (era 0,45; o usuário achou alta demais, 12/10/2026), tiro do Kael 0,6, tiro do policial 0,5, passo do Kael 0,35, passo do policial 0,18; o som cai com a distância da câmera (cheio até meia tela, mínimo 0,12) e vai para o lado em que está (pan até 0,7); tom varia ±4%; fade de entrada da música 2,5 s. No topo de `src/game/audio/Sfx.ts`.
-- Duração do ciclo do entardecer para a noite: valor inicial 8 minutos (provisório). O relógio na tela vai de 17:30 a 19:30, e as teclas `[` e `]` mudam a hora na cena de teste.
+- Duração do ciclo do entardecer para a noite: valor inicial 8 minutos (provisório); **3 minutos desde 13/10/2026** (playtest). O relógio na tela vai de 17:30 a 19:30, e as teclas `[` e `]` mudam a hora na cena de teste.
 - **Faixas do ciclo (11/10/2026, provisórias):** a noite cobre o entardecer de 25% a 95% do ciclo; as lojas acendem entre 50% e 80%; os postes, entre 60% e 72%; as estrelas aparecem de 55% a 95%. Ficam no topo de `src/game/world/Street.ts` e `Sky.ts`.
+- **Sangue (13/10/2026, provisório):** respingo de 6 a 10 gotas (1 a 2 px) no tiro letal e em todo tiro no Kael; 2 a 3 gotas, sem poça, na bala não letal; quem fica em pé pinga uma gota a cada 0,6 s por 2,4 s; manchas no chão ficam 6 s e somem em 2,5 s, no máximo 80; com chuva somem até 3 vezes mais rápido. No topo de `src/game/actors/Blood.ts`.
+- **Chuva (13/10/2026, provisória):** 50% por jogada, começa entre 70% e 85% do ciclo, chega ao máximo em 15 s e segue até o fim; 240 riscos atrás e 110 na frente, inclinação 0,18; véu azul-escuro de até 22%; volume do loop 0,15 (era 0,5, que ficava ~4 dB acima da música; agora ~6 dB abaixo, em 13/10/2026); nos finais o som baixa para 40% em 1,5 s quando a cutscene começa e vai a zero em 0,9 s quando entra a ilustração (`RAIN_LOW` em `ending.ts`). Tecla N liga e desliga na cena de teste. No topo de `src/game/world/Rain.ts`.
+- **Dica dos controles (13/10/2026, IA):** fica 4 s na tela, no alto, entrando e saindo em fade, sem pausar o jogo (`TOAST_MS` em `src/ui/Toast.tsx`).
+- **Sombras nos pés (13/10/2026, provisória):** elipse de pixel duro, preta com alfa 0,45 e 6 px de altura, na linha do chão e atrás de todos os personagens. A largura segue os pixels das 4 linhas de baixo do quadro, mais 3 px de folga de cada lado (mínimo 18, máximo 110): em pé cobre os pés, deitado cobre o corpo. No pulo encolhe e clareia até 45% a 90 px de altura. Kael, Adriana, policiais e mercenários. No topo de `src/game/world/Shadows.ts`.
 - **Ondas das barricadas (12/10/2026, provisórias):** a arena dispara 320 px antes da barricada, que fica a 200 px da borda direita da tela travada; um policial a cada 1,1 s, 1,5 s entre ondas; corpos somem depois de 2,5 s. Barricada 1 com 2 ondas (2 e 3 policiais), barricada 2 com 3 ondas (2, 3 e 3). Constantes no topo de `src/game/actors/Waves.ts`; ondas em `level_1.ts`.
 - **Pulo do Kael (12/10/2026, provisório):** Espaço, W ou ↑; 180 px parado e 240 px correndo, 85 px de altura (~1,5 m), cerca de 0,8 s no total. No topo de `src/game/scenes/Test.ts` e em `JUMP_MS` (`humanoid.ts`).
 - **Bala do policial (12/10/2026, provisória):** 650 px/s, alcance 1100 px; `hitChance` decide se mira o peito (55 ± 8 px do chão; **subiu para 85 ± 3 na fase 2**, ver abaixo) ou passa por cima (112 a 126 px); caixa do corpo do Kael com 100 px em pé e 80 px no ar, meia largura 12 px. No topo de `src/game/actors/Bullets.ts` e `Test.ts`.
@@ -271,3 +279,28 @@ Números e curvas que só fazem sentido jogando. Não decidir antes de testar.
 | 13/10/2026 | Ilustrações dos finais: feliz = opção 3 (close no beijo), triste = opção 1 (ela com o Kael no colo, na chuva) | Usuário |
 | 13/10/2026 | Placas da ilustração do final feliz com os nomes das lojas da fase: "ÓTICA" e "MODAS" | Usuário (pedido); IA (letras) |
 | 13/10/2026 | Fase 8: ilustrações animadas no jogo (passo `art` da cutscene, antes da tela de texto final), música mais baixa no feliz e silêncio no triste | IA, [TESTE] |
+| 13/10/2026 | Abertura: a 4ª linha passa a ser "Levaram ela para o fim desta rua. Tem barricada da polícia o caminho todo." (sai o prédio na Capital e as cinco quadras) | IA (texto); usuário (aprovou) |
+| 13/10/2026 | Recarga agachada do Kael ganha animação nova (`crouch_reload_gun`) | Usuário |
+| 13/10/2026 | Ciclo do entardecer à noite de 3 minutos (era 8), [TESTE] | Usuário |
+| 13/10/2026 | Sangue no Phaser a cada tiro que o Kael leva ou acerta; bala não letal solta só um respingo pequeno | Usuário |
+| 13/10/2026 | Recarga do Kael de ~1,2 s (era 2,08 s); policiais seguem como estão | Usuário |
+| 13/10/2026 | Chuva aleatória à noite, no fim da fase: em umas jogadas chove, em outras não (detalhes no plano `playtest_fixes_1.md`, aguardando aprovação) | Usuário |
+| 13/10/2026 | HUD nova feita no PixelLab, no estilo de X-Men: Mutant Apocalypse: rosto do Kael, nome, barra de vida e, embaixo, a de índole com uma balança (a cor muda com o valor; a balança pende quando ela está baixa) | Usuário |
+| 13/10/2026 | Seletor de arma como no GTA: punho sem arma, pistola com arma; a tecla 1 troca e os dois espaços aparecem por ~1 s. Pente vermelho = bala letal, azul = não letal | Usuário |
+| 13/10/2026 | Ordem do plano `playtest_fixes_1.md`: a HUD (fases 8 e 9) vem antes dos corpos, do sangue e da chuva; uma fase por vez, com o aval do usuário | Usuário |
+| 13/10/2026 | Peças da HUD escolhidas: rosto D (dentes cerrados), balança D, moldura do rosto C (cantos chanfrados), moldura da barra C (fina). A balança pendendo foi editada no PixelLab; a índole pende abaixo de 35% [TESTE] | Usuário |
+| 13/10/2026 | Seletor de arma e pentes: punho B (de lado), pistola D pintada nos cinzas da arma do Kael (pedido do usuário: "precisa ser cinza"), pente B em vermelho (letal) e azul (não letal). As balas do pente foram desenhadas à mão (5x10 px) | Usuário |
+| 13/10/2026 | Corpos no chão (fase 3): nos quadros em que o mercenário ou o policial nocauteado já deitou, o corpo desce até o chão e a arma solta do último quadro fica no chão, na frente dele | Playtest do usuário |
+| 13/10/2026 | Sangue no Phaser, sem arte nova: respingo na direção da bala, gotas que caem e viram mancha no chão, pinga por um tempo; tons da paleta de sangue escurecidos pela luz ambiente. Bala não letal só dá um respingo pequeno; o combo não sangra | Plano `playtest_fixes_1.md`, aprovado pelo usuário |
+| 13/10/2026 | Chuva aleatória à noite: 50% por jogada (mesma seed dos policiais, `?seed=`), começa entre 70% e 85% do ciclo e vai até o fim da fase. Som: "Rain (loopable)" de Ylmir, faixa 1 (CC0, https://opengameart.org/content/rain-loopable), em `assets/sounds/rain_loop.ogg` e `.mp3` | Plano aprovado; som escolhido pela IA, aguardando o usuário |
+| 13/10/2026 | Plano `playtest_fixes_1.md` aprovado na jogada ("gostei muito do resultado"); ajustes seguintes no plano `playtest_fixes_2.md` | Usuário |
+| 13/10/2026 | Sem a caixa de controles no começo da fase: os controles vão para Opções → Controles, numa lista de teclas com grupo "Teste"; no começo, só uma dica curta que aparece e some | Usuário |
+| 13/10/2026 | Chuva mais baixa (fica acima da música hoje); nos finais ela baixa e, quando entra a ilustração da cutscene, some de vez | Usuário |
+| 13/10/2026 | Sombra redonda nos pés do Kael, da Adriana, dos policiais e dos mercenários | Usuário |
+| 13/10/2026 | GDD reescrito na versão 0.4 com o estado atual do jogo; `docs/tests.md` criado com os cenários e resultados de todos os planos (planos anteriores contam como aprovados na jogada do usuário) | Usuário |
+| 13/10/2026 | Volume da chuva (0,15; 40% nos finais e zero na ilustração) e sombras nos pés aprovados na jogada: nada pendente no plano `playtest_fixes_2.md` | Usuário |
+| 13/10/2026 | Versão 0.1 = a quadra 1 jogável registrada em `tests.md`; o que ficou fora (quadras 2 a 5, itens em aberto e propostas) está em `docs/later_ideas.md` | Usuário |
+| 13/10/2026 | Policiais atiram em sequência (2 a 3 tiros seguidos) e seguram a mira entre as sequências; plano `enemy_ai_difficulty.md` criado (mais tiros, desviar da bala do Kael, aproveitar as aberturas dele) | Usuário |
+| 13/10/2026 | Policiais mais espertos: mais rápidos, menos previsíveis, adivinham se o Kael vai pular ou agachar, desviam da bala dele e aproveitam a recarga | Usuário |
+| 14/10/2026 | Tela de game over: escurece, "GAME OVER", "Você perdeu", frase triste e Enter reinicia | Usuário |
+| 14/10/2026 | Versão 0.1 do jogo fechada: README criado, documentos atualizados, commit e tag `v0.1` publicados na `main` | Usuário ("fechamos então a primeira versão do game") |

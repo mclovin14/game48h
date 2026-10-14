@@ -30,8 +30,13 @@ export const POLICE_DEFS = POLICE_VARIANTS.map((v) => POLICE[v]);
 export const ARCHETYPES = {
   // [TESTE]
   patrol: {
-    hp: 2, fireMs: 1800, range: 600, walkSpeed: 90, runSpeed: 190, walkLastPx: 70, mag: 8, aimHoldMs: 450, damage: 8, hitChance: 0.7,
+    hp: 2, fireMs: 800, range: 600, walkSpeed: 90, runSpeed: 190, walkLastPx: 70, mag: 8, aimHoldMs: 450, volley: [1, 4], volleyGapMs: 280, volleyPauseMs: 550,
+    damage: 8, hitChance: 0.7,
     crouchReload: true, matchCrouchMs: 450, jumpOnEnter: 0.4, jumpWhenAimed: 0.15, jumpDist: 150, jumpHeight: 70, jumpKeepPx: 180,
+    smart: {
+      aimSpeed: 2, aimHoldMs: [150, 380], fireJitter: [0.4, 1.6], dodgeChance: 0.45, dodgeReactMs: [90, 180], dodgeCooldownMs: 1400,
+      dodgeJumpH: 100, dodgeJumpSpeed: 2, closePx: 130,
+    },
   },
 } satisfies Record<string, EnemyArchetype>;
 

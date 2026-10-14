@@ -5,20 +5,23 @@ import { endingSteps } from '../cutscene/ending';
 import { openingSteps } from '../cutscene/opening';
 import { t } from '../../i18n';
 import { VOLUME, playAt, playStep, startMusic } from '../audio/Sfx';
-import { Bullets, type BodyBox } from '../actors/Bullets';
+import { Blood } from '../actors/Blood';
+import { Bullets, type BodyBox, type HitPoint } from '../actors/Bullets';
 import { BossFight } from '../actors/BossFight';
 import { EnemyDirector } from '../actors/EnemyDirector';
-import type { Gunner } from '../actors/Gunner';
+import { KaelHabits, type Gunner } from '../actors/Gunner';
 import { DEATH_DROP_CHANCE, Loot } from '../actors/Loot';
 import { MERCENARY_TONES, Mercenary } from '../actors/Mercenary';
 import { Waves } from '../actors/Waves';
 import { bus, type BulletType } from '../events';
-import { WIDTH, GROUND_Y, SIDEWALK_DEPTH } from '../screen';
+import { WIDTH, HEIGHT, GROUND_Y, SIDEWALK_DEPTH } from '../screen';
 import { LEVEL_1 } from '../levels/level_1';
 import { CameraRig } from '../world/CameraRig';
 import { Parallax } from '../world/Parallax';
 import { Props, addGround } from '../world/Props';
 import { GoArrow } from '../world/GoArrow';
+import { Shadows } from '../world/Shadows';
+import { Rain } from '../world/Rain';
 import { DayCycle, ambient, lerpColors, smoothstep } from '../world/DayCycle';
 import { Sky } from '../world/Sky';
 import { Street } from '../world/Street';
@@ -36,12 +39,12 @@ const MAG_SIZE = 8;
 const AIM_IDLE_MS = 1200;
 /** Intervalo mínimo entre tiros: o recuo do shoot_gun (quadros 0 a 3). Clique antes disso fica guardado. */
 const FIRE_MIN_MS = 270;
-/** Recarga: dura o som (colt_reload, 2,08 s), igual à animação reload_gun (11 x 190 ms). */
-const RELOAD_MS = 2080;
+/** Recarga [TESTE]: dura o som (colt_reload_fast, 1,21 s), igual à reload_gun do Kael (RELOAD_FAST_MS). Era 2,08 s. */
+const RELOAD_MS = 1210;
 const MORALE_MAX = 10;
 const LIFE_MAX = 100;
 const SHOT_RANGE = 900;
-const DAY_CYCLE_MS = 8 * 60 * 1000; // entardecer até a noite
+const DAY_CYCLE_MS = 3 * 60 * 1000; // entardecer até a noite [TESTE] (era 8 min)
 const CLOCK_STEP = 0.1; // quanto [ e ] mexem no relógio (fração do ciclo)
 /** Kael atingido: pisca em vermelho por este tempo e a tela treme de leve. */
 const HURT_FLASH_MS = 220;
@@ -95,6 +98,12 @@ const HOLD_DX = 55; // [TESTE]
 /** Final triste: o mercenário caído atira de perto do chão; a bala mira o peito do Kael. */
 const LAST_SHOT = { muzzleH: 14, aimH: 60, ahead: 30 }; // [TESTE]
 
+/** Sangue: gotas no ar na frente dos personagens; quem leva tiro pinga do ponto do acerto (altura sobre os pés). */
+const BLOOD_DEPTH = 3;
+/** Chuva: camada da frente por cima do carro e da faixa da frente (5), abaixo do relógio (10). Respingos da calçada até a rua. */
+const RAIN_DEPTH = 6;
+const RAIN_SPLASH_BAND: [number, number] = [GROUND_Y - SIDEWALK_DEPTH + 4, HEIGHT - 4];
+
 /** Silhueta distante: anda a 0,3 da câmera e desce até a calçada, para nada flutuar nos vãos. */
 const SKYLINE_FACTOR = 0.3;
 const SKYLINE_BOTTOM = GROUND_Y - SIDEWALK_DEPTH;
@@ -124,6 +133,8 @@ export class Test extends Phaser.Scene {
   private crouchKeys!: Phaser.Input.Keyboard.Key[];
   /** Agachado (ou abaixando). Levantando, já volta a false. */
   private crouched = false;
+  /** O que o Kael costuma fazer para fugir do tiro (os policiais leem isso). */
+  private habits = new KaelHabits();
   /** Trocando de pose com a mira: as animações da troca vão a POSTURE_SWAP_SPEED. */
   private postureSwap = false;
   private hurtFlash = 0;
@@ -139,6 +150,8 @@ export class Test extends Phaser.Scene {
   private skylineLights!: Phaser.GameObjects.TileSprite;
   private ground!: Phaser.GameObjects.TileSprite;
   private clockText!: Phaser.GameObjects.Text;
+  private blood!: Blood;
+  private rain!: Rain;
 
   private mode: KaelMode = 'free';
   private armed = false;
@@ -179,10 +192,14 @@ export class Test extends Phaser.Scene {
     this.morale = MORALE_MAX;
     this.hurtFlash = 0;
     this.crouched = false;
+    this.habits = new KaelHabits();
     this.postureSwap = false;
     this.combo = { step: 0, queued: false, landed: false };
 
-    this.buildWorld();
+    // seed das aparências e da chuva no registro: ?seed=... na URL repete a mesma jogada
+    const seed = new URLSearchParams(window.location.search).get('seed') ?? Math.random().toString(36).slice(2, 8);
+    this.registry.set('enemySeed', seed);
+    this.buildWorld(seed);
 
     const boss = LEVEL_1.boss;
     // a Adriana vem antes: o mercenário que a segura fica por cima, com a mão no pulso dela
@@ -195,9 +212,6 @@ export class Test extends Phaser.Scene {
     });
     this.kael = new Humanoid(this, LEVEL_1.kaelX, GROUND_Y, KAEL, 'idle');
     this.camRig = new CameraRig(this, this.kael, LEVEL_1.width);
-    // seed das aparências no registro: ?seed=... na URL repete a mesma sequência
-    const seed = new URLSearchParams(window.location.search).get('seed') ?? Math.random().toString(36).slice(2, 8);
-    this.registry.set('enemySeed', seed);
     this.waves = new Waves(this, LEVEL_1, GROUND_Y, this.camRig, new EnemyDirector(seed));
     this.waves.onFire = (cop) => this.onCopFire(cop);
     this.goArrow = new GoArrow(this);
@@ -278,6 +292,7 @@ export class Test extends Phaser.Scene {
       adriana: this.adriana,
       happy: this.morale >= MORALE_MAX / 2,
       lastShot: () => this.lastShot(),
+      quietRain: (factor, ms) => this.rain.quiet(factor, ms),
     });
     void new Cutscene(this, this.camRig).play(steps, () => bus.emit('game:ended'));
   }
@@ -295,6 +310,7 @@ export class Test extends Phaser.Scene {
     this.time.delayedCall((Math.abs(this.kael.x - x) / KAEL_BULLET.speed) * 1000, () => {
       this.hurtFlash = HURT_FLASH_MS;
       this.cameras.main.shake(HURT_SHAKE.ms, HURT_SHAKE.intensity);
+      this.blood.splash({ x: this.kael.x - dir * BODY_HALF_W, y: this.kael.y - LAST_SHOT.aimH, dir: dir === 1 ? 1 : -1 });
       this.killKael(false);
     });
   }
@@ -306,17 +322,18 @@ export class Test extends Phaser.Scene {
     this.input.enabled = on;
   }
 
-  /** Começa a jogar: a OST entra e, na primeira vez, a ajuda dos controles. */
+  /** Começa a jogar: a OST entra e, na primeira vez, a dica de onde ficam os controles. */
   private begin(): void {
     startMusic(this, 'ost_level_1');
     if (!this.registry.get('controlsShown')) {
       this.registry.set('controlsShown', true);
-      bus.emit('dialog:open', { text: t('game.controls') });
+      bus.emit('toast:show', { text: t('controls.toast') });
     }
   }
 
-  /** Céu, silhueta distante, chão, fachadas, postes e objetos de cena, e o relógio do entardecer à noite. */
-  private buildWorld(): void {
+  /** Céu, silhueta distante, chão, fachadas, postes e objetos de cena, o relógio do entardecer à noite,
+   *  e o que fica no chão atrás dos personagens (manchas de sangue e a camada de trás da chuva). */
+  private buildWorld(seed: string): void {
     this.cycle = new DayCycle(DAY_CYCLE_MS);
     this.sky = new Sky(this);
     this.parallax = new Parallax(this);
@@ -326,6 +343,10 @@ export class Test extends Phaser.Scene {
     this.ground = addGround(this, LEVEL_1, GROUND_Y - SIDEWALK_DEPTH);
     this.street = new Street(this, LEVEL_1, GROUND_Y - SIDEWALK_DEPTH, GROUND_Y);
     this.props = new Props(this, LEVEL_1, GROUND_Y - SIDEWALK_DEPTH, GROUND_Y);
+    this.blood = new Blood(this, GROUND_Y, BLOOD_DEPTH);
+    // sombras: antes dos personagens, para ficarem atrás de todos; cada Humanoid se inscreve ao nascer
+    new Shadows(this, GROUND_Y);
+    this.rain = new Rain(this, seed, RAIN_SPLASH_BAND, RAIN_DEPTH);
     this.clockText = this.add
       .text(this.scale.width - 10, 10, '', { fontFamily: 'monospace', fontSize: '14px', color: '#e6e9f0' })
       .setOrigin(1, 0)
@@ -357,13 +378,13 @@ export class Test extends Phaser.Scene {
     kb.addCapture('F1');
     kb.on('keydown-F1', () => this.waves.toggleDebug());
     kb.on('keydown-R', () => this.reload());
-    // derrota ainda EM ABERTO (decisions.md, item 14): por enquanto, Enter reinicia depois da morte
-    kb.on('keydown-ENTER', () => this.mode === 'dead' && this.scene.restart());
     kb.on('keydown-C', () => this.camRig.toggleDebug(this));
     // pela tecla digitada, não pelo código: no teclado ABNT o [ fica em outro lugar
     kb.on('keydown', (e: KeyboardEvent) => {
       if (e.key === '[') this.cycle.shift(-CLOCK_STEP);
       if (e.key === ']') this.cycle.shift(CLOCK_STEP);
+      // teste: liga e desliga a chuva
+      if (e.key === 'n' || e.key === 'N') this.rain.toggle();
     });
 
     this.input.mouse?.disableContextMenu();
@@ -382,10 +403,11 @@ export class Test extends Phaser.Scene {
     // cutscene deslizando a câmera: sem seguir ninguém, o FOLLOW_UPDATE não vem e o fundo anda daqui
     if (this.camRig.detached) this.parallax.update(this.cameras.main);
     this.updateTime(delta);
+    this.habits.update(delta);
     const alive = this.mode !== 'dead';
-    this.copBullets.update(delta, alive ? [this.bodyBox()] : [], (damage) => this.hurtKael(damage));
+    this.copBullets.update(delta, alive ? [this.bodyBox()] : [], (damage, _i, at) => this.hurtKael(damage, at));
     const enemies: Gunner[] = [...this.waves.cops.filter((c) => c.alive), ...this.fight.targets];
-    this.kaelBullets.update(delta, enemies.map((c) => this.copBox(c)), (type, i) => this.onCopHit(enemies[i], type));
+    this.kaelBullets.update(delta, enemies.map((c) => this.copBox(c)), (type, i, at) => this.onCopHit(enemies[i], type, at));
     if (!alive) {
       this.waves.update(delta, this.copTarget(false));
       this.fight.update(delta, this.copTarget(false));
@@ -464,6 +486,8 @@ export class Test extends Phaser.Scene {
     this.skyline.setTint(lerpColors(SKYLINE_TINT, t));
     this.skylineLights.setAlpha(smoothstep(0.45, 0.85, t));
     this.ground.setTint(tint);
+    this.rain.update(delta, t);
+    this.blood.update(delta, tint, this.rain.intensity);
     this.hurtFlash = Math.max(0, this.hurtFlash - delta);
     this.kael.setTint(this.hurtFlash > 0 ? HURT_TINT : tint);
     this.waves.setTint(tint);
@@ -552,12 +576,18 @@ export class Test extends Phaser.Scene {
     const x = this.kael.x + this.kael.facing * m.x;
     const y = this.kael.y - m.h;
     this.kaelBullets.fire(x, y, x + this.kael.facing * 100, y, this.bullet);
+    // os inimigos veem o tiro e às vezes desviam (IA esperta)
+    const shot = { x, h: m.h, dir: this.kael.facing, speed: KAEL_BULLET.speed };
+    for (const c of [...this.waves.cops, ...this.fight.mercenaries]) c.dodge(shot);
   }
 
-  /** Bala do Kael chegou num inimigo em pé. Matar mercenário não tira índole; acertar um antes da hora começa a luta. */
-  private onCopHit(cop: Gunner, type: BulletType): void {
+  /** Bala do Kael chegou num inimigo em pé. Matar mercenário não tira índole; acertar um antes da hora começa a luta.
+   *  Bala letal sangra (e quem fica em pé pinga); a não letal só dá um respingo pequeno. */
+  private onCopHit(cop: Gunner, type: BulletType, at: HitPoint): void {
     if (cop instanceof Mercenary) this.fight.start(this.kael.x);
     const result = cop.hit(type);
+    if (result) this.blood.splash(at, type !== 'lethal');
+    if (result === 'hurt' && type === 'lethal') this.bleedFrom(cop, at, () => cop.alive);
     if (cop instanceof Mercenary) {
       if (result === 'death' || result === 'knockout') this.loot.drop(cop.x);
       return;
@@ -577,7 +607,17 @@ export class Test extends Phaser.Scene {
   /** O que os policiais sabem do Kael: onde está, se está agachado e se está com a arma apontada. */
   private copTarget(alive: boolean) {
     const aiming = this.mode === 'raising' || this.mode === 'aimed' || this.mode === 'shooting';
-    return { x: this.kael.x, alive, crouched: this.crouched, aiming, facing: this.kael.facing };
+    return {
+      x: this.kael.x,
+      alive,
+      crouched: this.crouched,
+      aiming,
+      facing: this.kael.facing,
+      airborne: this.kael.y < GROUND_Y,
+      reloading: this.mode === 'reloading',
+      armed: this.armed,
+      habit: this.habits,
+    };
   }
 
   private onKaelAnimDone(): void {
@@ -698,10 +738,8 @@ export class Test extends Phaser.Scene {
     this.mode = 'reloading';
     this.pendingShot = false;
     this.postureSwap = false;
-    // agachado ainda não tem animação de recarga: fica na pose agachada enquanto o som toca
-    if (this.crouched) this.rest();
-    else this.kael.act('reload_gun', { restart: true });
-    this.reloadSound = playAt(this, 'colt_reload', this.kael.x, VOLUME.reload);
+    this.kael.act(this.crouched ? 'crouch_reload_gun' : 'reload_gun', { restart: true });
+    this.reloadSound = playAt(this, 'colt_reload_fast', this.kael.x, VOLUME.reload);
     this.reloadTimer = this.time.delayedCall(RELOAD_MS, () => this.finishReload());
     this.emitAmmo();
   }
@@ -745,6 +783,7 @@ export class Test extends Phaser.Scene {
     this.postureSwap = false;
     this.pendingShot = false;
     this.mode = 'jumping';
+    this.habits.jump += 1;
     this.jump = { t: 0, fromX: this.kael.x, dir: this.kael.facing, dist: this.running ? JUMP_DIST_RUN : JUMP_DIST };
     this.kael.act(this.armed ? 'jump_gun' : 'jump', { restart: true });
   }
@@ -787,6 +826,7 @@ export class Test extends Phaser.Scene {
   private startCrouch(down: boolean): void {
     this.mode = 'crouching';
     this.crouched = down;
+    if (down) this.habits.crouch += 1;
     this.pendingShot = false;
     this.kael.act(this.armed ? 'crouch_gun' : 'crouch', { restart: true, reverse: !down });
   }
@@ -827,13 +867,24 @@ export class Test extends Phaser.Scene {
     });
   }
 
-  private hurtKael(damage: number): void {
+  private hurtKael(damage: number, at?: HitPoint): void {
     if (this.mode === 'dead') return;
+    if (at) {
+      this.blood.splash(at);
+      this.bleedFrom(this.kael, at, () => this.mode !== 'dead');
+    }
     this.life = Math.max(0, this.life - damage);
     bus.emit('hud:life', { current: this.life, max: LIFE_MAX });
     this.hurtFlash = HURT_FLASH_MS;
     this.cameras.main.shake(HURT_SHAKE.ms, HURT_SHAKE.intensity);
     if (this.life === 0) this.killKael();
+  }
+
+  /** Pinga do ponto do acerto, acompanhando quem foi atingido, enquanto `standing()` (caído para de pingar). */
+  private bleedFrom(who: Phaser.GameObjects.Sprite, at: HitPoint, standing: () => boolean): void {
+    const dx = (at.x - who.x) * (who.flipX ? -1 : 1);
+    const h = who.y - at.y;
+    this.blood.bleed(() => (who.active && standing() ? { x: who.x + dx * (who.flipX ? -1 : 1), y: who.y - h } : null));
   }
 
   private killKael(showText = true): void {
@@ -850,14 +901,8 @@ export class Test extends Phaser.Scene {
     bus.emit('hud:life', { current: this.life, max: LIFE_MAX });
     this.kael.act('death');
     this.kael.anims.timeScale = 1;
-    // derrota ainda EM ABERTO (decisions.md, item 14): na cena de teste, só reinicia
-    if (!showText) return;
-    this.add
-      .text(this.scale.width / 2, 200, t('game.dead'), { fontFamily: 'monospace', fontSize: '18px', color: '#f4ebe8', backgroundColor: '#000a' })
-      .setOrigin(0.5)
-      .setScrollFactor(0)
-      .setDepth(1000)
-      .setPadding(10, 6);
+    // derrota ainda EM ABERTO (decisions.md, item 14): na cena de teste, a tela de game over (React) reinicia com Enter
+    if (showText) bus.emit('game:over');
   }
 
   // ---------- HUD ----------
@@ -869,6 +914,7 @@ export class Test extends Phaser.Scene {
       mag: this.mag,
       magSize: MAG_SIZE,
       reloading: this.mode === 'reloading',
+      reloadMs: RELOAD_MS,
     });
   }
 

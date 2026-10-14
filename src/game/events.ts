@@ -6,12 +6,14 @@ export type BulletType = 'lethal' | 'nonLethal';
 export type Speaker = 'adriana' | 'kael';
 
 export interface GameEvents {
-  /** lethal e nonLethal: reserva fora do pente. O pente (mag) tem sempre o tipo selecionado. */
-  'hud:ammo': { lethal: number; nonLethal: number; selected: BulletType; mag: number; magSize: number; reloading: boolean };
+  /** lethal e nonLethal: reserva fora do pente. O pente (mag) tem sempre o tipo selecionado. reloadMs: quanto dura a recarga. */
+  'hud:ammo': { lethal: number; nonLethal: number; selected: BulletType; mag: number; magSize: number; reloading: boolean; reloadMs: number };
   'hud:life': { current: number; max: number };
   'hud:morale': { current: number; max: number };
   'hud:weapon': { armed: boolean };
   'dialog:open': { text: string };
+  /** Dica curta que aparece e some sozinha (o começo da fase lembra onde ficam os controles). */
+  'toast:show': { text: string };
   /** Cutscene (Phaser → React): começa (faixas pretas, sem HUD), tela de texto, fala com retrato, termina. */
   /** `black`: começa com a tela preta (a cutscene abre com a tela de texto). */
   'cutscene:start': { black: boolean };
@@ -27,6 +29,8 @@ export interface GameEvents {
   'game:pause': undefined;
   'game:resume': undefined;
   'game:restart': undefined;
+  /** O Kael morreu (Phaser → React): a tela de game over escurece e espera o Enter, que manda `game:restart`. */
+  'game:over': undefined;
   /** Fim da fase (depois do final): volta ao título. */
   'game:ended': undefined;
   /** Volumes das opções, de 0 a 1: multiplicam os volumes de cada som. */

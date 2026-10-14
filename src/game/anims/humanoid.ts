@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { shadowsOf } from '../world/Shadows';
 
 // Personagens humanos de 128x128 virados para East (Kael, policiais e mercenários).
 // Uma sheet horizontal por animação; o jogo espelha para West.
@@ -69,6 +70,8 @@ export const jumpMs = (from: number, to: number) => JUMP_MS.slice(from, to).redu
 /** Rajada de 3 do fuzil: flash, recuo e bala três vezes, depois a fumaça (tools/build_mercenary.py). */
 const BURST_MS = [45, 45, 50, 45, 45, 50, 45, 45, 50, 80, 90, 90, 110, 160];
 
+/** Recarga do Kael [TESTE]: 1210 ms no total, casada com o colt_reload_fast. */
+export const RELOAD_FAST_MS = [110, 90, 90, 110, 110, 100, 130, 100, 100, 110, 160];
 const DEATH_MS = [70, 80, 90, ...Array(13).fill(100), 90, 90, 80, 80, 70, 90, 120, 160, ...Array(5).fill(140), 1200];
 
 export const ANIMS: Record<AnimName, AnimDef> = {
@@ -80,7 +83,7 @@ export const ANIMS: Record<AnimName, AnimDef> = {
   run_gun: { ms: 72, loop: true, floor: 121, steps: [2, 6] },
   // parando a corrida armado: junta a segunda mão na pistola até o idle_gun
   run_gun_stop: { ms: 80, loop: false, floor: 121 },
-  // 11 quadros x 190 ms = duração do colt_reload; o pente entra no quadro 6, junto do clique
+  // 11 quadros x 190 ms = duração do colt_reload (policiais; o Kael usa RELOAD_FAST_MS); o pente entra no quadro 6, junto do clique
   reload_gun: { ms: 190, loop: false, floor: 121 },
   aim_gun: { ms: 90, loop: false, floor: 121 },
   shoot_gun: { ms: [60, 60, 70, 80, 90, 90, 110, 160], loop: false, floor: 121 },
@@ -93,7 +96,7 @@ export const ANIMS: Record<AnimName, AnimDef> = {
   crouch_gun: { ms: 50, loop: false, floor: 121 },
   crouch_aim_gun: { ms: 90, loop: false, floor: 121 },
   crouch_shoot_gun: { ms: [60, 60, 70, 80, 90, 90, 110, 160], loop: false, floor: 121 },
-  // só nos policiais: a recarga em pé com o tronco descido, mesmos tempos
+  // a recarga em pé com o tronco descido, mesmos tempos (o Kael usa RELOAD_FAST_MS)
   crouch_reload_gun: { ms: 190, loop: false, floor: 121 },
   death: { ms: DEATH_MS, loop: false, floor: 120 },
   hurt: { ms: [60, 70, 90, 90, 80, 100], loop: false, floor: 121 },
@@ -138,8 +141,13 @@ export const animDef = (ch: CharacterDef, a: AnimName): AnimDef => ({ ...ANIMS[a
 
 export const KAEL: CharacterDef = {
   key: 'kael',
-  anims: ['idle', 'walk', 'run', 'idle_gun', 'walk_gun', 'run_gun', 'run_gun_stop', 'reload_gun', 'aim_gun', 'shoot_gun', 'jump', 'jump_gun', 'crouch', 'crouch_gun', 'crouch_aim_gun', 'crouch_shoot_gun', 'death', 'punch_1', 'punch_2', 'kick'],
+  anims: ['idle', 'walk', 'run', 'idle_gun', 'walk_gun', 'run_gun', 'run_gun_stop', 'reload_gun', 'aim_gun', 'shoot_gun', 'jump', 'jump_gun', 'crouch', 'crouch_gun', 'crouch_aim_gun', 'crouch_shoot_gun', 'crouch_reload_gun', 'death', 'punch_1', 'punch_2', 'kick'],
   sheet: (a) => `player/player_${a}_east_sheet.png`,
+  overrides: {
+    // recarga rápida [TESTE]: 1210 ms, o colt_reload_fast (tools/build_reload_sfx.py); o pente entra no quadro 6, junto do clique
+    reload_gun: { ms: RELOAD_FAST_MS },
+    crouch_reload_gun: { ms: RELOAD_FAST_MS },
+  },
 };
 
 export const POLICE_MASTER: CharacterDef = {
@@ -227,6 +235,7 @@ export class Humanoid extends Phaser.GameObjects.Sprite {
     super(scene, x, y, textureKey(ch, first));
     this.current = first;
     scene.add.existing(this);
+    shadowsOf(scene)?.add(this);
     // o primeiro quadro só vem no START; os seguintes (e a volta ao 0 no loop) vêm no UPDATE
     const onFrame = (_a: Phaser.Animations.Animation, f: Phaser.Animations.AnimationFrame) => {
       if (animDef(this.ch, this.current).steps?.includes(f.index - 1)) this.emit(HUMANOID_STEP, this);

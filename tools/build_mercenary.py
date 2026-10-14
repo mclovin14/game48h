@@ -28,6 +28,7 @@ import colorsys
 import json
 
 import numpy as np
+from scipy import ndimage
 from PIL import Image
 
 from shoot_fx import shoot_frames, lit_map
@@ -132,6 +133,29 @@ def burst(aim, lit, opts):
     return f[:3] * 3 + f[3:]
 
 
+# corpo no chão: nos quadros em que ele já deitou, a IA deixou o fuzil por baixo e o corpo ficou 13 px acima
+# do chão. Desce o quadro, corta o que passa do chão e põe por cima o fuzil solto do último quadro.
+SETTLE = {'death': range(12, 16), 'knockout': range(10, 12)}
+
+
+def settle(frames, idx):
+    """Desce o corpo até o chão nos quadros idx; o fuzil (ilha solta do último quadro) fica no chão, na frente."""
+    last = frames[-1]
+    lab, k = ndimage.label(last[:, :, 3] > 0, structure=np.ones((3, 3)))
+    sizes = ndimage.sum(np.ones_like(lab), lab, range(1, k + 1))
+    rifle = lab == 1 + int(np.argsort(sizes)[-2])
+    body_bottom = np.nonzero((last[:, :, 3] > 0) & ~rifle)[0].max()
+    dy = FLOOR - body_bottom
+    for i in idx:
+        a = np.zeros_like(frames[i])
+        a[dy:] = frames[i][:-dy]
+        a[FLOOR + 1:] = 0
+        a[rifle] = last[rifle]
+        drop_islands(a, 30)  # restos do fuzil antigo no chão
+        frames[i] = a
+    return dy
+
+
 def build():
     base = load(BASE)
     pal = palette_of(base)
@@ -143,6 +167,8 @@ def build():
             a = remap(load(f'{RAW}/{raw}_{i}.png'), pal)
             drop_islands(a)
             frames.append(ground(a, FLOOR))
+        if name in SETTLE:
+            print(f'{name}: corpo desce {settle(frames, SETTLE[name])} px')
         out[name] = (frames, ms)
     lit = lit_map(ramps_of(pal))
     for name, (src, opts) in SHOOT.items():

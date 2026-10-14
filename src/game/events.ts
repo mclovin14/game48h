@@ -1,6 +1,8 @@
 // Ponte React ↔ Phaser. Um lado não importa o outro: os dois falam por aqui.
 // O tipo GameEvents lista todos os eventos e os dados de cada um; nome ou dado errado não compila.
 
+import type { TouchHold, TouchTap } from './touch';
+
 export type BulletType = 'lethal' | 'nonLethal';
 /** Quem fala na cutscene (retrato e nome na caixa de fala). */
 export type Speaker = 'adriana' | 'kael';
@@ -33,6 +35,9 @@ export interface GameEvents {
   'game:over': undefined;
   /** Fim da fase (depois do final): volta ao título. */
   'game:ended': undefined;
+  /** Controle touch (React → Phaser): botão de segurar apertado ou solto, e botão de toque. */
+  'touch:hold': { button: TouchHold; down: boolean };
+  'touch:tap': { button: TouchTap };
   /** Volumes das opções, de 0 a 1: multiplicam os volumes de cada som. */
   'settings:volume': { music: number; sfx: number };
 }

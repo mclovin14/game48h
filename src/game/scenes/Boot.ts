@@ -22,6 +22,10 @@ export class Boot extends Phaser.Scene {
     const label = this.add
       .text(this.scale.width / 2, HEIGHT / 2, t('game.loading'), { fontFamily: 'monospace', fontSize: '16px', color: '#cfd6e4' })
       .setOrigin(0.5);
+    // ?v=<build> em todo arquivo: um build novo não usa imagem ou som antigo do cache
+    this.load.on(Phaser.Loader.Events.ADD, (_key: string, _type: string, _loader: unknown, file: Phaser.Loader.File) => {
+      if (typeof file.url === 'string' && !file.url.includes('?')) file.url += `?v=${__BUILD_ID__}`;
+    });
     this.load.on(Phaser.Loader.Events.PROGRESS, (p: number) => label.setText(`Carregando... ${Math.round(p * 100)}%`));
     loadSheets(this, KAEL);
     loadSheets(this, ADRIANA);

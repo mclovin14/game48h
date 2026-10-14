@@ -7,6 +7,9 @@ import { Dialog } from './ui/Dialog';
 import { Cutscene } from './ui/Cutscene';
 import { Toast } from './ui/Toast';
 import { GameOver } from './ui/GameOver';
+import { TouchControls } from './ui/TouchControls';
+import { enterMobileFullscreen, usePortrait, useTouch } from './ui/useTouch';
+import { t } from './i18n';
 import { emitVolumes, loadVolumes } from './ui/settings';
 
 type Screen = 'title' | 'playing';
@@ -18,6 +21,9 @@ export function App() {
   const [dialog, setDialog] = useState<string | null>(null);
   // cutscene em curso: sem HUD, e o Esc pula a cutscene em vez de pausar
   const [cutscene, setCutscene] = useState(false);
+  const touch = useTouch();
+  // celular em pé: o jogo para até virar
+  const portrait = usePortrait();
 
   useEffect(() => bus.on('dialog:open', ({ text }) => setDialog(text)), []);
   // fim da fase (depois do final): volta ao título
@@ -26,7 +32,7 @@ export function App() {
   useEffect(() => emitVolumes(loadVolumes()), []);
 
   // O jogo para enquanto houver menu de pausa ou diálogo aberto.
-  const halted = paused || dialog !== null;
+  const halted = paused || dialog !== null || portrait;
   useEffect(() => {
     if (screen === 'playing') bus.emit(halted ? 'game:pause' : 'game:resume');
   }, [halted, screen]);
@@ -57,10 +63,18 @@ export function App() {
           {!paused && !cutscene && <Hud />}
           <Cutscene onActive={setCutscene} />
           <Toast />
+          {touch && !paused && !cutscene && dialog === null && <TouchControls onPause={() => setPaused(true)} />}
           <GameOver paused={paused} />
         </>
       )}
-      {screen === 'title' && <TitleMenu onPlay={() => setScreen('playing')} />}
+      {screen === 'title' && (
+        <TitleMenu
+          onPlay={() => {
+            enterMobileFullscreen();
+            setScreen('playing');
+          }}
+        />
+      )}
       {paused && (
         <PauseMenu
           onResume={() => setPaused(false)}
@@ -72,6 +86,12 @@ export function App() {
         />
       )}
       {dialog !== null && !paused && <Dialog text={dialog} onClose={closeDialog} />}
+      {portrait && (
+        <div className="rotate">
+          <div className="rotate-phone" />
+          <p>{t('touch.rotate')}</p>
+        </div>
+      )}
     </div>
   );
 }

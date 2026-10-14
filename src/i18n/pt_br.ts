@@ -100,6 +100,22 @@ export const ptBr = {
   'controls.clock': 'Volta / avança o relógio',
   'controls.rain.key': 'N',
   'controls.rain': 'Liga / desliga a chuva',
+
+  'touch.toast': 'Segure o direcional para andar; arraste até a ponta para correr e para baixo para agachar',
+  'touch.jump': 'Pular',
+  'touch.fire': 'Atirar',
+  'touch.aim': 'Mirar',
+  'touch.melee': 'Soco',
+  'touch.weapon': 'Arma',
+  'touch.reload': 'Recarga',
+  'touch.bullet': 'Bala',
+  'touch.pause': 'Pausa',
+  'touch.skip': 'Pular cena',
+  'touch.rotate': 'Vire o celular para jogar na horizontal',
+  'touch.dialog': 'Toque para continuar',
+  'touch.cutscene': 'Toque avança',
+  'touch.gameover': 'Toque para tentar de novo',
+  'touch.menuHint': 'Toque para escolher',
 };
 
 export type TextKey = keyof typeof ptBr;

@@ -9,7 +9,7 @@ Use este arquivo para continuar o projeto em outra IA (Gemini, GPT ou outra sess
    Para saber o que já foi testado e o que ficou sem verificação: `docs/tests.md`. O que ficou fora da versão 0.1: `docs/later_ideas.md`.
 4. Se a tarefa for de história: `docs/story.md`. Se for continuar um plano: o arquivo em `docs/plan/`.
 
-Atualizado em 14/10/2026: **versão 0.1 do jogo fechada** (tag `v0.1` na `main`), seguida da **0.1.1** (tag `v0.1.1`: build da web corrigido, sheets em grade). Nesta sessão entraram a IA esperta dos policiais, a tela de game over e o `README.md`; o GDD foi para a versão 0.5.
+Atualizado em 14/10/2026: **versão 0.1 do jogo fechada** (tag `v0.1` na `main`), seguida da **0.1.1** (tag `v0.1.1`: build da web corrigido, sheets em grade) e da **0.1.2** (tag `v0.1.2`: controle touch, jogo no celular e `?v=<build>` contra o cache). Nesta sessão entraram a IA esperta dos policiais, a tela de game over e o `README.md`; o GDD foi para a versão 0.5.
 
 ---
 
@@ -61,6 +61,10 @@ As versões ficam travadas no `package-lock.json`. Não atualize pacote sem pedi
 **Build web (14/10/2026):** `npm run build` gera `dist/` (~23 MB) com caminhos relativos (`base: './'` no `vite.config.ts`) e sem `drafts/` nem `sounds/source/` (plugin `dropDrafts`). Testado servido numa subpasta: título, jogo e game over sem erro nem arquivo faltando.
 
 **Correção do build publicado (14/10/2026):** na hospedagem, as sheets em tira mais largas que ~1500 px (morte com 30 quadros = 3840 px, rajada, recarga e morte do mercenário) chegavam reduzidas; o Phaser ficava sem quadros e o jogo travava ao tocar a animação (`Cannot read properties of undefined (reading 'duration')`). As sheets com mais de 8 quadros viraram grade de 8 por linha (`tools/build_grid_sheets.py`, 35 sheets, iguais quadro a quadro às tiras); `save_anim` já salva em grade; o jogo lê a grade com `sheetFrames()` (`humanoid.ts`, também no `uniformTones.ts`). A imagem mais larga do `dist/` agora tem 1376 px.
+
+**Cache na Hostinger (14/10/2026):** com o `dist/` da 0.1.1 publicado, as 4 sheets do mercenário que eram tiras largas continuaram quebradas (o pacote já era o novo): o cache servia as imagens antigas, de mesmo nome. Agora a `Boot` acrescenta `?v=<build>` a todo arquivo carregado pelo Phaser (`__BUILD_ID__`, definido no `vite.config.ts` a cada build). Ao publicar, limpar também o cache do CDN no painel da Hostinger.
+
+**Controle touch (0.1.2, 14/10/2026):** `src/ui/TouchControls.tsx` aparece só quando o ponteiro principal é o dedo (`isTouchDevice()` em `src/game/touch.ts`, `useTouch()` em `src/ui/useTouch.ts`). Os botões mandam `touch:hold` e `touch:tap` pelo `bus`; a cena `Test` junta ao teclado (`touchDown`, `crouchHeld`, `onTouchHold`, `onTouchTap`). Toque direto no canvas não atira (`pointer.wasTouch`). Celular em pé para o jogo (`usePortrait`, aviso `.rotate`). Pendente: testar num iPhone e num Android de verdade (tela cheia, som, tamanho dos botões). Plano: `docs/plan/touch_controls.md`.
 
 **Versão 0.1 (14/10/2026, tag `v0.1`):** a quadra 1 jogável do começo ao fim. O resumo para quem chega fica no `README.md`; o que ficou fora, no `docs/later_ideas.md`.
 

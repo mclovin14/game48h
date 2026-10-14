@@ -27,6 +27,7 @@ Ao terminar uma fase, acrescente os cenários dela aqui. O status do plano fica 
 | 9 | `enemy_ai_difficulty.md` | 1 a 3 (policiais) | passou na medição da IA; aguardando o teste do usuário |
 | 10 | (sem plano) tela de game over | 1 | passou no navegador; aguardando o teste do usuário |
 | 11 | (sem plano) build da web e sheets em grade | 1 | passou no navegador; aguardando a publicação do usuário |
+| 12 | `touch_controls.md`: controle touch e celular (0.1.2) | 1 | passou na emulação de iPhone e Android; aguardando o teste num celular |
 
 **Itens que seguem em aberto mesmo com os planos aprovados** (não são falha de teste, são escolhas ou números para afinar):
 - Números [TESTE] de vida, dano, munição, ondas, chuva, sangue e sombra (`decisions.md`, seção 3).
@@ -227,3 +228,22 @@ Erro relatado pelo usuário no jogo publicado: "SpriteSheet frame dimensions wil
 | 11.4 | Morte e nocaute do policial, rajada, recarga, tiro agachado, nocaute e morte do mercenário e morte do Kael tocam até o fim, sem erro nem aviso | passou |
 | 11.5 | Nenhuma imagem do `dist/` passa de 1408 px de largura (a maior tem 1376) | passou |
 | 11.6 | O jogo publicado na hospedagem do usuário | pendente (o usuário sobe o `dist/` novo) |
+| 11.7 | Hostinger com o `dist/` da 0.1.1: as 4 sheets de mercenário que eram tiras largas seguiam quebradas (cache servia as antigas) | falhou; corrigido com `?v=<build>` em todos os arquivos do Phaser |
+| 11.8 | `dist/` novo: os 143 arquivos carregados saem com `?v=`; sem erro | passou |
+| 11.9 | Dev: tiros de verdade (mouse) nos policiais da primeira barricada derrubam sem travar; mortes de policial, mercenário e Kael tocam até o fim | passou |
+
+## 12. Controle touch e celular, versão 0.1.2 (14/10/2026)
+
+Plano `touch_controls.md`. Testado com o Chrome emulando iPhone 13 e Pixel 5 (deitado e em pé, toque de verdade pelo DevTools). Falta o teste num celular de verdade.
+
+| # | Cenário | Resultado |
+|---|---|---|
+| 12.1 | Computador: sem controles touch; dica do começo fala de Esc → Opções | passou |
+| 12.2 | Celular: "Novo Jogo" por toque; "Pular cena" pula a abertura; os controles aparecem e a dica fala do direcional | passou |
+| 12.3 | Direcional: arrastar pouco anda, até a ponta corre, soltar para; para baixo agacha | passou |
+| 12.4 | Pular, Arma, Atirar (gasta bala) e Recarga | passou |
+| 12.5 | Pausa por toque: abre o menu e os controles somem; "Continuar" por toque volta | passou |
+| 12.6 | Celular em pé: aviso para virar e jogo parado; deitado de novo, volta a rodar | passou |
+| 12.7 | Game over: tocar na tela reinicia | passou |
+| 12.8 | Nenhum erro no console (iPhone e Pixel) | passou |
+| 12.9 | Celular de verdade (Safari no iPhone, Chrome no Android), tela cheia e som | pendente (o usuário testa no jogo publicado) |

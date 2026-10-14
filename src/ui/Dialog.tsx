@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { t } from '../i18n';
+import { useTouch } from './useTouch';
 
 interface Props {
   text: string;
@@ -8,6 +9,7 @@ interface Props {
 
 /** Caixa de texto (mensagem da quadra, avisos). Fecha com clique, Enter ou Espaço. */
 export function Dialog({ text, onClose }: Props) {
+  const touch = useTouch();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Enter' || e.key === ' ') onClose();
@@ -20,7 +22,7 @@ export function Dialog({ text, onClose }: Props) {
     <div className="overlay" onClick={onClose}>
       <div className="panel dialog">
         <p>{text}</p>
-        <small>{t('dialog.continue')}</small>
+        <small>{t(touch ? 'touch.dialog' : 'dialog.continue')}</small>
       </div>
     </div>
   );

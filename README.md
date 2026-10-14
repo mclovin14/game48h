@@ -1,6 +1,6 @@
 # Saves Her
 
-**Versão 0.1.1** (14/10/2026): a 0.1 com a correção do jogo publicado na web (sheets em grade).
+**Versão 0.1.2** (14/10/2026): controle touch e jogo no celular (Android e iOS), mais a correção do cache da hospedagem. A 0.1.1 corrigiu o jogo publicado na web (sheets em grade).
 
 Metroidvania de ação em vista lateral, em pixel art, que roda no navegador. Kael, um policial sozinho com uma pistola, atravessa as barricadas da própria polícia para resgatar a noiva, Adriana. A cada tiro ele escolhe entre matar ou só derrubar, e essa escolha enche a barra de índole e decide o final.
 
@@ -34,7 +34,7 @@ npm run build        # confere os tipos e gera dist/
 npm run preview      # serve o dist/ para conferir
 ```
 
-**Publicar na web:** rode `npm run build` e suba o **conteúdo** da pasta `dist/` (o `index.html` na raiz) para qualquer hospedagem estática: itch.io (zip do conteúdo, tipo HTML), GitHub Pages, Netlify ou outra. Os caminhos são relativos, então funciona também numa subpasta. O `dist/` não vai para o git.
+**Publicar na web:** rode `npm run build` e suba o **conteúdo** da pasta `dist/` (o `index.html` na raiz) para qualquer hospedagem estática: itch.io (zip do conteúdo, tipo HTML), GitHub Pages, Netlify ou outra. Os caminhos são relativos, então funciona também numa subpasta. Cada build põe `?v=<build>` nos arquivos do jogo; mesmo assim, limpe o cache do CDN da hospedagem ao publicar. O `dist/` não vai para o git.
 
 ## Controles
 
@@ -53,6 +53,19 @@ npm run preview      # serve o dist/ para conferir
 | Enter | Depois do game over, tenta de novo |
 
 A lista completa, com as teclas de teste, fica no jogo, em **Opções → Controles**.
+
+**No celular** (os botões só aparecem com tela de toque, com o celular deitado):
+
+| Botão | Ação |
+|---|---|
+| Direcional (metade esquerda) | Arrastar anda; até a ponta corre; para baixo agacha; para cima pula |
+| Pular | Pular |
+| Mirar / Soco | Com arma (segure): mirar. Sem arma: combo |
+| Atirar | Atirar |
+| Arma, Recarga, Bala | Sacar ou guardar, recarregar, bala letal ou não letal |
+| Pausa | Pausa e opções |
+
+Tocar na tela avança diálogos e cutscenes e, depois do game over, tenta de novo.
 
 ## Tecnologia
 

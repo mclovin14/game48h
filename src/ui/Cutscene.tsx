@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { bus, type Speaker } from '../game/events';
 import { t } from '../i18n';
 import { VOLUME_STEPS, loadVolumes } from './settings';
+import { useTouch } from './useTouch';
 
 // Cutscene por cima do jogo: faixas pretas, tela de texto e caixa de fala com retrato.
 // O texto entra letra por letra com um bipe; Enter (ou clique) completa a frase e, completa, avança. Esc pula.
@@ -79,6 +80,8 @@ export function Cutscene({ onActive }: { onActive: (active: boolean) => void }) 
   // a tela preta cobre tudo até o texto de abertura fechar; depois some devagar (CSS)
   const [black, setBlack] = useState(false);
   const [bars, setBars] = useState(false);
+  // no celular: dica de toque e um botão para pular (no lugar do Esc)
+  const touch = useTouch();
 
   useEffect(() => {
     let raf = 0;
@@ -118,6 +121,11 @@ export function Cutscene({ onActive }: { onActive: (active: boolean) => void }) 
   const hz = shown?.kind === 'line' ? BEEP_HZ[shown.speaker] : BEEP_HZ.kael;
   const type = useTypewriter(text, hz);
 
+  const skip = () => {
+    setShown(null);
+    bus.emit('cutscene:skip');
+  };
+
   const advance = () => {
     if (!shown) return;
     if (!type.done) return type.finish();
@@ -127,14 +135,15 @@ export function Cutscene({ onActive }: { onActive: (active: boolean) => void }) 
   };
   const advanceRef = useRef(advance);
   advanceRef.current = advance;
+  const skipRef = useRef(skip);
+  skipRef.current = skip;
 
   useEffect(() => {
     if (!active || !bars) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        setShown(null);
-        bus.emit('cutscene:skip');
+        skipRef.current();
       } else if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         advanceRef.current();
@@ -163,7 +172,19 @@ export function Cutscene({ onActive }: { onActive: (active: boolean) => void }) 
           </div>
         </div>
       )}
-      {bars && <small className="cutscene-hint">{t('cutscene.hint')}</small>}
+      {bars && <small className="cutscene-hint">{t(touch ? 'touch.cutscene' : 'cutscene.hint')}</small>}
+      {bars && touch && (
+        <button
+          type="button"
+          className="cutscene-skip"
+          onClick={(e) => {
+            e.stopPropagation();
+            skip();
+          }}
+        >
+          {t('touch.skip')}
+        </button>
+      )}
     </div>
   );
 }

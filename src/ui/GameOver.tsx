@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { bus } from '../game/events';
 import { t } from '../i18n';
+import { useTouch } from './useTouch';
 
 /** Tempos da tela de game over [TESTE]: espera a queda do Kael, escurece, mostra o título e só depois aceita o Enter. */
 const DELAY_MS = 900;
@@ -18,6 +19,7 @@ export function GameOver({ paused }: Props) {
   const [over, setOver] = useState<{ msg: (typeof MESSAGES)[number]; id: number } | null>(null);
   const [shown, setShown] = useState(false);
   const [ready, setReady] = useState(false);
+  const touch = useTouch();
 
   useEffect(() => {
     const offOver = bus.on('game:over', () =>
@@ -54,11 +56,12 @@ export function GameOver({ paused }: Props) {
 
   if (!over) return null;
   return (
-    <div key={over.id} className={`gameover${shown ? ' on' : ''}`}>
+    // no celular, tocar na tela faz o papel do Enter
+    <div key={over.id} className={`gameover${shown ? ' on' : ''}`} onClick={() => ready && !paused && bus.emit('game:restart')}>
       <h1>{t('gameover.title')}</h1>
       <h2>{t('gameover.subtitle')}</h2>
       <p>{t(over.msg)}</p>
-      <small className={ready ? 'on' : ''}>{t('gameover.restart')}</small>
+      <small className={ready ? 'on' : ''}>{t(touch ? 'touch.gameover' : 'gameover.restart')}</small>
     </div>
   );
 }

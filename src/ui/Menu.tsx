@@ -3,6 +3,7 @@ import { t, type TextKey } from '../i18n';
 import { Options } from './Options';
 import { useLang } from './settings';
 import { useMenuKeys } from './useMenuKeys';
+import { useTouch } from './useTouch';
 
 /** Logo "Saves Her" (PixelLab, assets/ui/title_logo.png), ampliado sem suavizar. */
 export function Logo({ small = false }: { small?: boolean }) {
@@ -95,5 +96,6 @@ export function PauseMenu({ onResume, onRestart, onQuit }: PauseProps) {
 
 function Hint({ options }: { options: boolean }) {
   useLang();
-  return <p className="menu-hint">{t(options ? 'options.hint' : 'menu.hint')}</p>;
+  const touch = useTouch();
+  return <p className="menu-hint">{t(touch ? 'touch.menuHint' : options ? 'options.hint' : 'menu.hint')}</p>;
 }

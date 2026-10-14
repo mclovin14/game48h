@@ -17,6 +17,8 @@ function dropDrafts(): Plugin {
 // base './': o build funciona em qualquer pasta do servidor (itch.io, GitHub Pages, subpasta).
 export default defineConfig({
   base: './',
+  // muda a cada build: vai na URL dos arquivos do jogo para nenhum cache (navegador, CDN da hospedagem) servir a versão antiga
+  define: { __BUILD_ID__: JSON.stringify(Date.now().toString(36)) },
   plugins: [react(), dropDrafts()],
   publicDir: 'assets',
 });

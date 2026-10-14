@@ -25,6 +25,7 @@ import { Rain } from '../world/Rain';
 import { DayCycle, ambient, lerpColors, smoothstep } from '../world/DayCycle';
 import { Sky } from '../world/Sky';
 import { Street } from '../world/Street';
+import { isTouchDevice, type TouchHold, type TouchTap } from '../touch';
 
 // Valores provisórios [TESTE]: só servem para a cena de teste.
 const WALK_SPEED = 120; // px/s
@@ -139,6 +140,9 @@ export class Test extends Phaser.Scene {
   private postureSwap = false;
   private hurtFlash = 0;
   private keys!: Record<'left' | 'right' | 'a' | 'd' | 'shift', Phaser.Input.Keyboard.Key>;
+  /** Botões touch seguros agora (bus `touch:hold`) e o pulo apertado desde o último quadro. */
+  private touch: Record<TouchHold, boolean> = { left: false, right: false, run: false, crouch: false, jump: false, aim: false };
+  private touchJump = false;
   private running = false;
   private camRig!: CameraRig;
   private parallax!: Parallax;
@@ -180,6 +184,8 @@ export class Test extends Phaser.Scene {
     this.armed = false;
     this.aimHeld = false;
     this.pendingShot = false;
+    this.touch = { left: false, right: false, run: false, crouch: false, jump: false, aim: false };
+    this.touchJump = false;
     this.reserve = { ...START_AMMO };
     this.bullet = 'lethal';
     this.mag = Math.min(MAG_SIZE, this.reserve.lethal);
@@ -247,6 +253,8 @@ export class Test extends Phaser.Scene {
         this.sound.resumeAll();
       }),
       bus.on('game:restart', () => this.scene.restart()),
+      bus.on('touch:hold', ({ button, down }) => this.onTouchHold(button, down)),
+      bus.on('touch:tap', ({ button }) => this.onTouchTap(button)),
     ];
     // reiniciar a cena dá SHUTDOWN; voltar ao título destrói o jogo (DESTROY): nos dois, o bus solta a cena
     const cleanup = () => {
@@ -327,7 +335,7 @@ export class Test extends Phaser.Scene {
     startMusic(this, 'ost_level_1');
     if (!this.registry.get('controlsShown')) {
       this.registry.set('controlsShown', true);
-      bus.emit('toast:show', { text: t('controls.toast') });
+      bus.emit('toast:show', { text: t(isTouchDevice() ? 'touch.toast' : 'controls.toast') });
     }
   }
 
@@ -388,14 +396,47 @@ export class Test extends Phaser.Scene {
     });
 
     this.input.mouse?.disableContextMenu();
+    // dedo na tela não atira: no celular quem atira são os botões touch
     this.input.on(Phaser.Input.Events.POINTER_DOWN, (p: Phaser.Input.Pointer) => {
+      if (p.wasTouch) return;
       if (p.button === 2) this.onAimPressed();
       if (p.button === 0) this.onFirePressed();
     });
     this.input.on(Phaser.Input.Events.POINTER_UP, (p: Phaser.Input.Pointer) => {
+      if (p.wasTouch) return;
       if (p.button === 2) this.onAimReleased();
     });
     this.input.on(Phaser.Input.Events.POINTER_WHEEL, () => this.switchBullet());
+  }
+
+  /** Botão touch de segurar. O estado fica guardado sempre (soltar na cutscene não pode se perder); a ação só com controle. */
+  private onTouchHold(button: TouchHold, down: boolean): void {
+    this.touch[button] = down;
+    if (!this.input.enabled) return;
+    if (button === 'jump' && down) this.touchJump = true;
+    if (button === 'aim') {
+      if (down) this.onAimPressed();
+      else this.onAimReleased();
+    }
+  }
+
+  /** Botão touch de toque: o mesmo que o clique esquerdo, a tecla 1, o R e o Q. */
+  private onTouchTap(button: TouchTap): void {
+    if (!this.input.enabled) return;
+    if (button === 'fire') this.onFirePressed();
+    else if (button === 'weapon') this.toggleWeapon();
+    else if (button === 'reload') this.reload();
+    else this.switchBullet();
+  }
+
+  /** Botão touch seguro, só com o controle ligado (na cutscene o Kael não anda). */
+  private touchDown(button: TouchHold): boolean {
+    return this.input.enabled && this.touch[button];
+  }
+
+  /** S, ↓, Ctrl ou o direcional touch para baixo. */
+  private crouchHeld(): boolean {
+    return this.crouchKeys.some((k) => k.isDown) || this.touchDown('crouch');
   }
 
   update(_time: number, delta: number): void {
@@ -416,7 +457,9 @@ export class Test extends Phaser.Scene {
 
     this.kael.anims.timeScale = this.postureSwap ? POSTURE_SWAP_SPEED : 1;
     const dir = this.moveInput();
-    if (this.jumpKeys.some((k) => Phaser.Input.Keyboard.JustDown(k))) this.startJump(dir);
+    const touchJump = this.touchJump;
+    this.touchJump = false;
+    if (this.jumpKeys.some((k) => Phaser.Input.Keyboard.JustDown(k)) || touchJump) this.startJump(dir);
     if (this.mode === 'jumping') this.updateJump(delta);
     this.updatePosture();
     // mirando sem segurar o botão direito: andar abaixa a arma na hora (agachado, A/D só viram)
@@ -430,7 +473,7 @@ export class Test extends Phaser.Scene {
       if (dir !== 0) {
         this.mode = 'free';
         // corre só livre: mirar, atirar e recarregar param o Kael
-        this.running = this.keys.shift.isDown;
+        this.running = this.keys.shift.isDown || this.touchDown('run');
         const speed = this.running ? RUN_SPEED : WALK_SPEED;
         this.kael.face(dir);
         this.kael.x = Phaser.Math.Clamp(this.kael.x + dir * speed * (delta / 1000), 40, LEVEL_1.width - 40);
@@ -497,8 +540,8 @@ export class Test extends Phaser.Scene {
   }
 
   private moveInput(): -1 | 0 | 1 {
-    const left = this.keys.left.isDown || this.keys.a.isDown;
-    const right = this.keys.right.isDown || this.keys.d.isDown;
+    const left = this.keys.left.isDown || this.keys.a.isDown || this.touchDown('left');
+    const right = this.keys.right.isDown || this.keys.d.isDown || this.touchDown('right');
     return left === right ? 0 : left ? -1 : 1;
   }
 
@@ -641,7 +684,7 @@ export class Test extends Phaser.Scene {
       case 'lowering':
         this.mode = 'free';
         // abaixou a arma para trocar de pose, mas a tecla foi solta no meio: a troca acabou
-        if (this.postureSwap && this.crouchKeys.some((k) => k.isDown) === this.crouched) this.postureSwap = false;
+        if (this.postureSwap && this.crouchHeld() === this.crouched) this.postureSwap = false;
         break;
       case 'crouching':
         this.mode = 'free';
@@ -813,7 +856,7 @@ export class Test extends Phaser.Scene {
 
   /** Segurar S ou ↓ agacha; soltar levanta. Mirando, abaixa a arma antes; atirando ou recarregando, espera. */
   private updatePosture(): void {
-    const want = this.crouchKeys.some((k) => k.isDown);
+    const want = this.crouchHeld();
     if (want === this.crouched) return;
     if (this.mode === 'free') this.startCrouch(want);
     else if (this.mode === 'aimed') {

@@ -94,6 +94,7 @@ Regra: cada item marcado como DECIDIDO, EM ABERTO ou AJUSTAR EM TESTE. Nada entr
 - **Pente e tipos de bala:** o pente carrega o tipo selecionado. Trocar de tipo devolve as balas do pente para a reserva e recarrega com o outro tipo.
 - **Tecla R:** só recarrega (não reinicia mais a cena). Reiniciar fica no menu de pausa. Depois da morte, **Enter** reinicia (proposta da IA aprovada pelo usuário em 12/10/2026; o que acontece na derrota segue em aberto, item 14).
 - **Tela de game over** (14/10/2026, pedido do usuário): quando o Kael cai, a tela escurece devagar e aparecem "GAME OVER", "Você perdeu" e uma frase triste sorteada (Adriana esperando, Kael caído). O "Pressione Enter para tentar de novo" pisca quando o Enter passa a valer (~3,6 s depois da queda) [TESTE]. Vale para a cena de teste; o que a derrota faz no jogo completo segue no item 14. Frases escritas pela IA, o usuário pode trocar (`src/i18n/`).
+- **Controle touch e jogo no celular** (14/10/2026, pedido do usuário): os controles touch aparecem só no celular ou tablet (ponteiro principal é o dedo). Direcional à esquerda (anda, corre na ponta, agacha para baixo, pula para cima) e, à direita, Atirar, Pular, Mirar/Soco, Arma, Recarga e Bala; Pausa no alto. O jogo pede para virar o celular na horizontal e para enquanto estiver em pé. Tamanhos e distâncias [TESTE]. Plano: `docs/plan/touch_controls.md`.
 - **Correr:** segurar Shift. O Kael **para** para atirar e para recarregar. Atirar correndo e recarregar andando ficam de fora por enquanto.
 - **Menu em português**, com internacionalização (português e inglês).
 - **OST** só quando a fase abre; o menu fica sem música.
@@ -306,3 +307,5 @@ Números e curvas que só fazem sentido jogando. Não decidir antes de testar.
 | 14/10/2026 | Versão 0.1 do jogo fechada: README criado, documentos atualizados, commit e tag `v0.1` publicados na `main` | Usuário ("fechamos então a primeira versão do game") |
 | 14/10/2026 | Spritesheets em grade de até 8 quadros por linha: as tiras largas travavam o jogo publicado | Erro relatado pelo usuário no build da web |
 | 14/10/2026 | Versão 0.1.1 (tag `v0.1.1`): a 0.1 com o build da web corrigido (caminhos relativos, sem rascunhos, sheets em grade) | Usuário |
+| 14/10/2026 | Controles touch só no celular (direcional + botões), jogo responsivo para Android e iOS e aviso para virar na horizontal | Usuário |
+| 14/10/2026 | Versão 0.1.2 (tag `v0.1.2`): controle touch e celular, mais o `?v=<build>` contra o cache da hospedagem | Usuário |

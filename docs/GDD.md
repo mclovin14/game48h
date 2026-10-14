@@ -1,6 +1,6 @@
 # Saves Her: Game Design Document
 
-Versão 0.5, 14/10/2026. Corresponde à **versão 0.1 do jogo** (tag `v0.1` no git): a quadra 1 jogável do começo ao fim, do entardecer à noite, com barricadas, mercenários, os dois finais e a tela de game over.
+Versão 0.5, 14/10/2026. Corresponde à **versão 0.1 do jogo** (tag `v0.1` no git): a quadra 1 jogável do começo ao fim, do entardecer à noite, com barricadas, mercenários, os dois finais e a tela de game over. Desde a 0.1.2 do jogo, roda também no celular (Android e iOS, deitado), com controle touch.
 Fontes: `decisions.md`, `story.md`, `handoff.md` e os sprites em `assets/`. Se este documento divergir do `decisions.md`, vale o `decisions.md`. Os números provisórios ficam no `decisions.md`, seção 3, e os testes feitos em `tests.md`.
 
 Como ler as marcações:

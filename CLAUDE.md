@@ -53,7 +53,7 @@ assets/sounds/           sons (tiros, fuzil CC0, recarga, OST); source/ = grava�
 assets/levels/level_1/   cenário da quadra 1: facades/ (dusk, night, lights), skyline, props/, drafts/
 src/                     código do jogo (TypeScript)
   main.tsx, App.tsx      React: tela, menus, HUD e diálogos por cima do jogo
-  ui/                    Hud, Menu (título e pausa), Options, Controls (lista de teclas, dentro das Opções), Toast (dica curta que some sozinha), GameOver (tela de derrota, Enter reinicia), Dialog, Cutscene (faixas, tela de texto, falas com retrato), settings (volumes no localStorage), useMenuKeys
+  ui/                    Hud, Menu (título e pausa), Options, Controls (lista de teclas, dentro das Opções), Toast (dica curta que some sozinha), TouchControls (controle touch, só no celular), useTouch (celular, em pé, tela cheia), GameOver (tela de derrota, Enter reinicia), Dialog, Cutscene (faixas, tela de texto, falas com retrato), settings (volumes no localStorage), useMenuKeys
   i18n/                  textos da interface: pt_br.ts (padrão), en.ts, t(chave)
   game/screen.ts         WIDTH 960, MAX_WIDTH 1280, HEIGHT 540, GROUND_Y, viewWidth (importe daqui, nunca do config.ts)
   game/config.ts         configuração do Phaser (importa as cenas)
@@ -61,6 +61,7 @@ src/                     código do jogo (TypeScript)
   game/world/            CameraRig (câmera), Parallax, DayCycle (relógio e luz ambiente), Sky, Street (fachadas, postes e muro), Props (chão, objetos e barricada), GoArrow (seta de siga em frente), Rain (chuva aleatória à noite), Shadows (sombra nos pés dos personagens)
   game/audio/Sfx.ts      sons: carregar, tocar com distância e pan, passos, música
   game/events.ts         ponte tipada React ↔ Phaser (um lado não importa o outro)
+  game/touch.ts          tipos dos botões touch e isTouchDevice (sem Phaser nem React)
   game/anims/humanoid.ts sheets, animações e o sprite Humanoid (Kael, policiais e mercenários)
   game/actors/           Gunner (IA comum de quem atira), Police (aparência + arquétipo), Mercenary (mercenários de fuzil e tons), BossFight (luta final), uniformTones (farda por canvas), EnemyDirector (sorteio), Waves (ondas das barricadas), Loot (caixa de munição), Bullets (balas do Kael e dos inimigos), Blood (sangue: respingo, gotas e manchas)
   game/cutscene/         Cutscene (roteiro em passos: texto, fala, ilustração, câmera, animação), opening (abertura da quadra 1), ending (finais pela índole) e endingArt (sheets das ilustrações dos finais)
@@ -77,10 +78,11 @@ npm run build        # confere os tipos e gera dist/
 ```
 
 - O Vite serve `assets/` direto (`publicDir`): carregue `player/...` e `enemies/...`, sem copiar arquivo.
-- Build web: `npm run build` gera `dist/` com caminhos relativos (`base: './'`), que roda em qualquer pasta do servidor; os `drafts/` e `sounds/source/` ficam de fora. Para publicar, suba o conteúdo de `dist/` (fica fora do git). No CSS, use `url('/...')` (o Vite reescreve).
+- Build web: `npm run build` gera `dist/` com caminhos relativos (`base: './'`), que roda em qualquer pasta do servidor; os `drafts/` e `sounds/source/` ficam de fora. Para publicar, suba o conteúdo de `dist/` (fica fora do git). No CSS, use `url('/...')` (o Vite reescreve). Todo arquivo que o Phaser carrega sai com `?v=<build>` (`__BUILD_ID__`, na `Boot`), para o cache da hospedagem ou do navegador não servir a versão antiga.
 - Animação nova: acrescente em `ANIMS` (ms por quadro e linha do chão) e na lista do personagem em `humanoid.ts`.
 - Rode `npm run typecheck` antes de entregar qualquer mudança de código, e teste no navegador o que mudou.
 - React e Phaser não se importam: só conversam pelo `bus` de `events.ts`. Evento novo entra no tipo `GameEvents`.
+- Controle novo: teclado/mouse na cena e um botão em `TouchControls.tsx` (evento `touch:hold` ou `touch:tap`).
 - Texto que o jogador vê vai para `src/i18n/` (pt_br e en), lido com `t('chave')`.
 - Números provisórios ficam como constantes no topo da cena, com o comentário `[TESTE]`.
 - Comentários em português e curtos; nomes de código em inglês.

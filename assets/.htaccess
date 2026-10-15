@@ -1,0 +1,7 @@
+# Hostinger: o CDN reduz e converte as imagens para o celular, e o jogo precisa delas no tamanho original.
+# no-transform pede ao CDN que entregue o arquivo como está.
+<IfModule mod_headers.c>
+  <FilesMatch "\.(png|gif|jpe?g)$">
+    Header set Cache-Control "public, max-age=604800, no-transform"
+  </FilesMatch>
+</IfModule>

@@ -11,6 +11,7 @@ import { loadGoArrow } from '../world/GoArrow';
 import { loadSounds } from '../audio/Sfx';
 import { loadEndingArt, registerEndingArt } from '../cutscene/endingArt';
 import { t } from '../../i18n';
+import { fitImages, trackImages } from '../fitImages';
 
 /** Carrega as spritesheets e os sons, registra as animações; depois abre a cena de teste. */
 export class Boot extends Phaser.Scene {
@@ -26,6 +27,7 @@ export class Boot extends Phaser.Scene {
     this.load.on(Phaser.Loader.Events.ADD, (_key: string, _type: string, _loader: unknown, file: Phaser.Loader.File) => {
       if (typeof file.url === 'string' && !file.url.includes('?')) file.url += `?v=${__BUILD_ID__}`;
     });
+    trackImages(this);
     this.load.on(Phaser.Loader.Events.PROGRESS, (p: number) => label.setText(`Carregando... ${Math.round(p * 100)}%`));
     loadSheets(this, KAEL);
     loadSheets(this, ADRIANA);
@@ -40,6 +42,8 @@ export class Boot extends Phaser.Scene {
   }
 
   create(): void {
+    // imagem que a hospedagem reduziu volta ao tamanho original
+    fitImages(this);
     registerAnims(this, KAEL);
     registerAnims(this, ADRIANA);
     // tons de farda gerados por canvas a partir das sheets das cabeças
